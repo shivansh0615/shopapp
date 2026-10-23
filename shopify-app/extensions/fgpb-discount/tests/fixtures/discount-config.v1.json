@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "shopDomain": "example.myshopify.com",
+  "activeCampaigns": [
+    {
+      "campaignId": "8",
+      "rewardType": "FREE_GIFT",
+      "threshold": {
+        "amount": "999.00",
+        "currencyCode": "INR"
+      },
+      "giftVariantIds": ["54277124161902"],
+      "maxGiftQuantity": 1
+    }
+  ]
+}

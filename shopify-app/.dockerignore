@@ -1,0 +1,71 @@
+# Dependencies and caches
+node_modules
+**/node_modules
+.npm
+.cache
+/.react-router
+
+# Build outputs (produced inside the image)
+build
+dist
+coverage
+**/coverage
+**/dist
+
+# Secrets and local env (never bake into images)
+.env
+.env.*
+!.env.example
+
+# Git / CI / editor / OS
+.git
+.github
+.gitignore
+.cursor
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local databases
+prisma/dev.sqlite
+prisma/dev.sqlite-journal
+*.sqlite
+*.sqlite-journal
+database.sqlite
+
+# Local Shopify CLI / probe artifacts
+.shopify
+.gemini
+.ai
+_theme_fix
+_*.mjs
+_sqlite_*
+_store_cookies*
+_tmp_*
+**/*.har
+**/playwright-report/
+**/test-results/
+**/_pw-profile*/
+
+# Docs and non-runtime sources not required to run the built app
+docs
+*.md
+!README.md
+
+# Local previews and historical design/probe artifacts
+.local-preview
+.codex-finalizer
+.codex-pptx
+deliverables
+tmp
+validation-output
+
+# Excluded patterns never enter either Docker build stage.
+.dockerignore

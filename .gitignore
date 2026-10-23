@@ -1,0 +1,13 @@
+# Local editor config
+.codex/
+.cursor/
+
+# Secrets and installed dependencies
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules/
+**/.shopify/
+**/.next/
+**/dist/
+**/build/

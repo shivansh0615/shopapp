@@ -1,0 +1,57 @@
+{% assign fgpb_sync = '164' %}
+{% comment %}
+  Must load first: defines window.__FGPB_RT, the isolation-stage kill switch every
+  other asset consults before it reads, paints, or mutates anything.
+{% endcomment %}
+{% assign fgpb_asset_name = 'fgpb-runtime.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'theme-surface.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'cart-page-progress.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'bar-height.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'unlock-celebrate.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'tiered-gift-sync.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% comment %}
+  Optional third-party cart drawer compatibility.
+  Default off — never loads cart-drawer-compat.js unless merchant enables it.
+{% endcomment %}
+{% if block.settings.enable_third_party_cart_compatibility %}
+  {% assign fgpb_asset_name = 'cart-drawer-compat.js' %}
+  {% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% endif %}
+<div
+  data-fgpb-bootstrap
+  data-widget-state-url="/apps/free-gift/widget-state"
+  data-fgpb-sync="{{ fgpb_sync }}"
+  {% if block.settings.enable_third_party_cart_compatibility %}
+    data-fgpb-tp-cart-compat="1"
+  {% endif %}
+  hidden
+  aria-hidden="true"
+></div>
+
+{% schema %}
+{
+  "name": "UpsellTrix",
+  "target": "body",
+  "javascript": "free-gift-progress-bar.js",
+  "stylesheet": "free-gift-progress-bar.css",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Verified on Dawn, Online Store 2.0, and Savor. Other themes may not be supported."
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_third_party_cart_compatibility",
+      "label": "Optional third-party cart compatibility (beta)",
+      "info": "Loads an optional script for KwikCart / #upc-cart (default off). Does not enable universal drawer support. Leave off for Dawn, Online Store 2.0, and Savor.",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

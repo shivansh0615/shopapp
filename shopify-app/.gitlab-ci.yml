@@ -1,0 +1,238 @@
+# GitLab CI — multi-job release gates
+# Parity target: .github/workflows/release-gates.yml (kept; not deleted)
+#
+# Does NOT deploy the Shopify app or publish themes.
+# Dummy Shopify values are CI-only placeholders (override via GitLab CI/CD Variables).
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "master"
+
+stages:
+  - validate
+  - database
+  - test
+  - build
+
+variables:
+  FF_NETWORK_PER_BUILD: "true"
+
+  POSTGRES_DB: fgpb
+  POSTGRES_USER: fgpb
+  POSTGRES_PASSWORD: fgpb
+  POSTGRES_HOST_AUTH_METHOD: trust
+
+  # Overridable via GitLab CI/CD Variables. Defaults are safe CI dummies — not real secrets.
+  NODE_ENV: "production"
+  SHOPIFY_API_KEY: "00000000000000000000000000000000"
+  SHOPIFY_API_SECRET: "shpss_ci_dummy_secret_not_real"
+  SHOPIFY_APP_URL: "https://fgpb-ci.myexample.com"
+  SCOPES: "read_discounts,write_discounts,read_publications,read_products"
+  # GitLab service DNS hostname is `postgres` (not localhost).
+  DATABASE_URL: "postgresql://fgpb:fgpb@postgres:5432/fgpb?schema=public"
+
+default:
+  interruptible: true
+  image: node:22.18-bookworm
+
+.setup_node:
+  before_script:
+    - node -v && npm -v
+    - apt-get update -qq && apt-get install -y -qq openssl >/dev/null
+    - npm ci --include=dev
+
+.wait_postgres: &wait_postgres |
+  echo "Waiting for PostgreSQL at postgres:5432..."
+  for i in $(seq 1 60); do
+    if node -e "
+      const net = require('net');
+      const s = net.connect({ host: 'postgres', port: 5432 }, () => { s.end(); process.exit(0); });
+      s.on('error', () => process.exit(1));
+      setTimeout(() => process.exit(1), 1000);
+    "; then
+      echo "PostgreSQL is accepting connections."
+      break
+    fi
+    if [ "$i" -eq 60 ]; then
+      echo "ERROR: PostgreSQL did not become ready in time."
+      exit 1
+    fi
+    sleep 2
+  done
+
+.branch_rules: &branch_rules
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  - if: $CI_COMMIT_BRANCH == "main"
+  - if: $CI_COMMIT_BRANCH == "master"
+
+# =============================================================================
+# Stage: validate
+# =============================================================================
+validate_config:
+  extends: .setup_node
+  stage: validate
+  timeout: 20m
+  rules: *branch_rules
+  script:
+    - npm run validate:env
+    - npm run check:deployment-readiness
+    - npm run scan:secrets
+    - npm run test:config
+    - npm run check:api-version-skew
+    # Parity with .github/workflows/release-gates.yml — production TOML path must stay gated.
+    - SHOPIFY_TOML_TEMPLATE=shopify.app.toml npm run generate:production-toml
+    - SHOPIFY_TOML_PATH=shopify.app.production.toml npm run validate:production-toml
+    # UpsellTrix template (active Partner app) must also satisfy compliance + proxy contract.
+    - |
+      SHOPIFY_APP_URL="$SHOPIFY_APP_URL" \
+      SHOPIFY_TOML_TEMPLATE=shopify.app.upselltrix.toml \
+      SHOPIFY_TOML_OUT=shopify.app.production.upselltrix.toml \
+        npm run generate:production-toml
+    - SHOPIFY_TOML_PATH=shopify.app.production.upselltrix.toml npm run validate:production-toml
+
+# =============================================================================
+# Stage: database
+# =============================================================================
+database_checks:
+  extends: .setup_node
+  stage: database
+  timeout: 30m
+  rules: *branch_rules
+  # Empty needs: start as soon as the pipeline is created (parallel with validate).
+  needs: []
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  script:
+    - *wait_postgres
+    - npx prisma generate
+    - npx prisma format
+    - npx prisma validate
+    - npx prisma migrate deploy
+    - npx prisma migrate status
+    - npm run db:check
+    - npm run staging:fixtures:seed
+    - npm run money:backfill:dry-run
+    - npm run money:backfill
+    - npm run money:verify
+    # Idempotency: dry-run + verify again after execute
+    - npm run money:backfill:dry-run
+    - npm run money:verify
+    - npm run staging:fixtures:cleanup -- --confirm
+
+# =============================================================================
+# Stage: test
+# =============================================================================
+code_quality:
+  extends: .setup_node
+  stage: test
+  timeout: 25m
+  rules: *branch_rules
+  needs:
+    - job: validate_config
+  script:
+    - npx prisma generate
+    - npm run typecheck
+    - npm run lint
+
+backend_tests:
+  extends: .setup_node
+  stage: test
+  timeout: 30m
+  rules: *branch_rules
+  needs:
+    - job: validate_config
+    - job: database_checks
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  script:
+    - *wait_postgres
+    - npx prisma generate
+    - npx prisma migrate deploy
+    - npm run test:backend
+    - npm run test:discount-sync
+    - npm run test:compliance
+    - npm run test:promotion
+    # Worker scripts must boot against CI Postgres (empty queue → exit 0).
+    - npm run discount-sync:once
+    - npm run discount-sync:inspect
+
+storefront_tests:
+  extends: .setup_node
+  stage: test
+  timeout: 25m
+  rules: *branch_rules
+  needs:
+    - job: validate_config
+  script:
+    - npm run build:storefront
+    - npm run check:storefront-assets
+    - npm run test:discount-function
+    - npm run test:storefront
+    - npm run test:storefront-validation
+
+# =============================================================================
+# Stage: build
+# =============================================================================
+app_build:
+  extends: .setup_node
+  stage: build
+  timeout: 25m
+  rules: *branch_rules
+  needs:
+    - job: code_quality
+    - job: backend_tests
+    - job: storefront_tests
+  script:
+    - npx prisma generate
+    - npm run build:storefront
+    - npm run check:storefront-assets
+    - npm run build
+  artifacts:
+    when: on_success
+    expire_in: 3 days
+    paths:
+      - build/
+
+# Docker image build via Docker-in-Docker.
+# REQUIRES a privileged GitLab runner with DinD support and runner tag `docker`.
+# Shared/unprivileged runners cannot run this job — register a tagged privileged runner.
+# Release-critical: waits for test+app build success (not validate_config alone).
+docker_image:
+  stage: build
+  tags:
+    - docker
+  image: node:22.18-bookworm
+  timeout: 45m
+  rules: *branch_rules
+  needs:
+    - job: app_build
+  services:
+    - name: docker:27-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - |
+      echo "Waiting for Docker daemon (privileged DinD runner tag 'docker' required)..."
+      # docker:dind with DOCKER_TLS_CERTDIR="" listens on tcp://docker:2375
+      apt-get update -qq
+      apt-get install -y -qq docker.io >/dev/null
+      for i in $(seq 1 60); do
+        if docker info >/dev/null 2>&1; then
+          echo "Docker daemon is ready."
+          break
+        fi
+        if [ "$i" -eq 60 ]; then
+          echo "ERROR: Docker daemon not ready. Register a privileged runner with tag 'docker'."
+          exit 1
+        fi
+        sleep 2
+      done
+  script:
+    - docker version
+    - npm run build:docker

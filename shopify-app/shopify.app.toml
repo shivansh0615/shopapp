@@ -1,0 +1,54 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+#
+# Local development: `automatically_update_urls_on_dev = true` lets Shopify CLI
+# replace application_url / auth / app_proxy URLs with the active tunnel.
+# Production deploy: set application_url, auth.redirect_urls (/auth/callback — NOT
+# /api/auth), and app_proxy.url (backend path /apps/proxy) to your hosted HTTPS
+# origin, then run `npm run validate:production-toml` before `npm run deploy:production`.
+# Runtime authPathPrefix is "/auth" (see app/shopify.server.ts).
+
+client_id = "38f760e2b4436ea157c262ac18f1970b"
+name = "Free Gift Progress Bar"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = [ "app/scopes_update" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/compliance"
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+
+[events]
+# Required by Shopify CLI 4.7.0 config validation even when the app has no
+# Events API subscriptions (CLI workaround; no deliveries are created).
+api_version = "unstable"
+subscription = []
+
+[access_scopes]
+# Align with UpsellTrix launch scopes. This file is the legacy CLI template
+# (different client_id / name). Production UpsellTrix uses
+# shopify.app.upselltrix.toml.
+scopes = "read_discounts,write_discounts,read_publications,read_products"
+
+[auth]
+# Must match app/shopify.server.ts authPathPrefix = "/auth".
+# Placeholders remain for local CLI URL rewriting; production deploy is gated by
+# npm run validate:production-toml (rejects example.com / localhost).
+redirect_urls = [ "https://example.com/auth/callback" ]
+
+[app_proxy]
+url = "https://example.com/apps/proxy"
+subpath = "free-gift"
+prefix = "apps"

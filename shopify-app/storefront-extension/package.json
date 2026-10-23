@@ -1,0 +1,16 @@
+{
+  "name": "free-gift-progress-bar-extension",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:core": "esbuild src/index.js --bundle --minify --legal-comments=none --platform=browser --target=es2018 --tree-shaking=true --outfile=src/.bundle.tmp.js && terser src/.bundle.tmp.js --ecma 2018 --compress passes=12,unsafe=true,unsafe_comps=true,unsafe_math=true,unsafe_methods=true,hoist_funs=true,hoist_vars=true,reduce_vars=true,collapse_vars=true,drop_console=true,pure_getters=true,booleans_as_integers=true --mangle toplevel=true --mangle-props \"regex=/^(giftAddInFlight|giftAddError|mutating|suppressCartRefresh|cartListenersInstalled|knownGiftVariantId|campaignLoaded|ht|ds|uh|ud|cl|lc|cb|sv|se|sr|sp|autoAddGift|rewardType|unlockedGifts|nextTier|rewardTiers)$/\" --output ../extensions/free-gift-progress-bar/assets/free-gift-progress-bar.js && node -e \"require('fs').unlinkSync('src/.bundle.tmp.js')\"",
+    "build:compat": "esbuild src/cart-drawer-compat.entry.js --bundle --minify --legal-comments=none --target=es2018 --outfile=../extensions/free-gift-progress-bar/assets/cart-drawer-compat.js",
+    "build:compat:raw": "esbuild src/cart-drawer-compat.entry.js --bundle --legal-comments=none --target=es2018 --outfile=src/.compat.raw.tmp.js",
+    "build": "npm run build:core && npm run build:compat && node ../scripts/storefront-assets.mjs",
+    "test": "node --test src/tests/*.test.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "terser": "^5.49.0"
+  }
+}

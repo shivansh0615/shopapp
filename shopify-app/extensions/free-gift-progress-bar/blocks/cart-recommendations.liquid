@@ -1,0 +1,45 @@
+{% comment %}
+  Optional theme-editor placement. The app embed also auto-mounts bestsellers on /cart
+  when Cart Experience recommendations are enabled. Campaign settings are source of truth.
+{% endcomment %}
+<section
+  class="fgpb-recs"
+  data-fgpb-recs
+  data-widget-state-url="/apps/free-gift/widget-state"
+  aria-busy="true"
+  aria-live="polite"
+  hidden
+>
+  <div class="fgpb-recs__header">
+    <h2 class="fgpb-recs__heading">{{ block.settings.heading | default: "Bestsellers" | escape }}</h2>
+    <p class="fgpb-recs__description">{{ block.settings.description | escape | newline_to_br }}</p>
+  </div>
+  <p class="fgpb-recs__status" data-fgpb-recs-status>Loading recommendations…</p>
+  <div class="fgpb-recs__grid" data-fgpb-recs-grid role="list"></div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart Recommendations",
+  "target": "section",
+  "stylesheet": "cart-recommendations.css",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Products and copy are controlled in the app campaign editor (Cart Experience). These fields are fallbacks only."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Fallback heading",
+      "default": "Bestsellers"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Fallback description",
+      "default": "Complete your order with these customer favorites."
+    }
+  ]
+}
+{% endschema %}

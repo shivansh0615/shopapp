@@ -1,0 +1,23 @@
+# Local PostgreSQL for Free Gift Progress Bar development.
+# Does not touch prisma/dev.sqlite. Does not run against production.
+#
+# Start:  docker compose -f docker-compose.postgres.yml up -d
+# Stop:   docker compose -f docker-compose.postgres.yml down
+# Then:   set DATABASE_URL in .env and run `npx prisma migrate deploy`
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fgpb-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: fgpb
+      POSTGRES_PASSWORD: fgpb
+      POSTGRES_DB: fgpb
+    volumes:
+      - fgpb_pg_data:/var/lib/postgresql/data
+
+volumes:
+  fgpb_pg_data:

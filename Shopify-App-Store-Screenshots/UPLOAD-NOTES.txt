@@ -1,0 +1,18 @@
+Upload these screenshots in this order:
+
+1. 01-overview.png
+   Alt text: UpsellTrix overview showing campaign performance, recent campaigns, and store health.
+
+2. 02-create-campaign.png
+   Alt text: UpsellTrix campaign builder with free-gift campaign types and a live storefront preview.
+
+3. 03-storefront-progress.png
+   Alt text: Storefront cart preview showing progress toward unlocking a free gift.
+
+4. 04-gift-unlocked.png
+   Alt text: Storefront cart preview showing an unlocked free gift added to the shopper's bag.
+
+5. 05-checkout.png
+   Alt text: Checkout preview showing the eligible gift discounted to free.
+
+All images are 1600 x 900 PNG files. Originals were not changed.

@@ -1,0 +1,182 @@
+name: Release gates
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: release-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  release-gates:
+    name: Mandatory release gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: fgpb
+          POSTGRES_PASSWORD: fgpb
+          POSTGRES_DB: fgpb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fgpb -d fgpb"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Dummy syntactically valid production values for boot/build only.
+      # Not real Shopify credentials.
+      NODE_ENV: production
+      SHOPIFY_API_KEY: "00000000000000000000000000000000"
+      SHOPIFY_API_SECRET: "shpss_ci_dummy_secret_not_real"
+      SHOPIFY_APP_URL: "https://fgpb-ci.myexample.com"
+      SCOPES: "read_discounts,write_discounts,read_publications,read_products"
+      DATABASE_URL: "postgresql://fgpb:fgpb@localhost:5432/fgpb?schema=public"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.18"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Validate production environment variables
+        run: npm run validate:env
+
+      - name: Deployment readiness artifacts
+        run: npm run check:deployment-readiness
+
+      - name: Secret-pattern scan (no values printed)
+        run: npm run scan:secrets
+
+      - name: Configuration unit tests (env + TOML generate/validate)
+        run: npm run test:config
+
+      - name: Generate production TOML from CI SHOPIFY_APP_URL
+        env:
+          SHOPIFY_TOML_TEMPLATE: shopify.app.toml
+        run: npm run generate:production-toml
+
+      - name: Validate generated production TOML
+        env:
+          SHOPIFY_TOML_PATH: shopify.app.production.toml
+        run: npm run validate:production-toml
+
+      - name: Generate UpsellTrix production TOML
+        env:
+          SHOPIFY_TOML_TEMPLATE: shopify.app.upselltrix.toml
+          SHOPIFY_TOML_OUT: shopify.app.production.upselltrix.toml
+        run: npm run generate:production-toml
+
+      - name: Validate UpsellTrix production TOML
+        env:
+          SHOPIFY_TOML_PATH: shopify.app.production.upselltrix.toml
+        run: npm run validate:production-toml
+
+      - name: Prisma format check
+        run: npx prisma format --check
+
+      - name: Prisma validate
+        run: npx prisma validate
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Prisma migrate deploy (CI database)
+        run: npx prisma migrate deploy
+
+      - name: Prisma migrate status
+        run: npx prisma migrate status
+
+      - name: Database connectivity check
+        run: npm run db:check
+
+      - name: Seed staging money fixtures (synthetic shop)
+        run: npm run staging:fixtures:seed
+
+      - name: Money backfill dry-run
+        run: npm run money:backfill:dry-run
+
+      - name: Money backfill execute
+        run: npm run money:backfill
+
+      - name: Money backfill verify
+        run: npm run money:verify
+
+      - name: Money backfill execute idempotent rerun
+        run: npm run money:backfill
+
+      - name: Money utility tests
+        run: npm run test:money
+
+      - name: API version alignment check
+        run: npm run check:api-version-skew
+
+      - name: Cleanup staging money fixtures
+        run: npm run staging:fixtures:cleanup -- --confirm
+
+      - name: Build storefront assets and generated metadata
+        run: npm run build:storefront
+
+      - name: Verify storefront assets
+        run: npm run check:storefront-assets
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Backend tests
+        run: npm run test:backend
+
+      - name: Discount sync queue tests
+        run: npm run test:discount-sync
+
+      - name: Discount sync worker run-once (empty queue)
+        run: npm run discount-sync:once
+
+      - name: Discount sync queue inspect
+        run: npm run discount-sync:inspect
+
+      - name: Compliance webhook tests
+        run: npm run test:compliance
+
+      - name: Promotion-engine regression tests
+        run: npm run test:promotion
+
+      - name: Discount Function tests
+        run: npm run test:discount-function
+
+      - name: Storefront tests
+        run: npm run test:storefront
+
+      - name: Storefront validation harness unit tests
+        run: npm run test:storefront-validation
+
+      - name: Production application build
+        run: npm run build
+
+      - name: Production Docker image build
+        run: npm run build:docker
+
+      # shopify.app.toml may keep example.com for local CLI.
+      # Production/staging deploy must use generate:production-toml + deploy:production.
+      # Intentionally NOT in this workflow (tracked separately, not a silent ignore):
+      # Full Shopify Theme Check remains separate; core size is measured by check:storefront-assets.

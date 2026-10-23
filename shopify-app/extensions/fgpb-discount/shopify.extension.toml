@@ -1,0 +1,17 @@
+api_version = "2026-01"
+
+[[extensions]]
+name = "FGPB Tagged Gift Discount"
+handle = "fgpb-discount"
+uid = "f1a2b3c4-d5e6-4789-a012-fgpbdiscount01"
+type = "function"
+description = "Applies 100% discount only to app-tagged free gift cart lines."
+
+  [[extensions.targeting]]
+  target = "cart.lines.discounts.generate.run"
+  input_query = "src/cart_lines_discounts_generate_run.graphql"
+  export = "cart-lines-discounts-generate-run"
+
+  [extensions.build]
+  path = "dist/function.wasm"
+  typegen_command = "npm exec -- graphql-code-generator --config package.json"

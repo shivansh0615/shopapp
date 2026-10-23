@@ -1,0 +1,1001 @@
+.fgpb-progress-card {
+  width: 100%;
+  padding: var(--fg-pad, 16px);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: var(--fg-r, 14px);
+  background: var(--fg-bg, #f8fafc);
+  color: var(--fg-t, #111827);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  box-sizing: border-box;
+}
+
+/* Cart recommendations live in the extension stylesheet so the app embed adds
+   one render-blocking CSS request instead of a second satellite stylesheet. */
+.fgpb-recs {
+  --fgpb-recs-bg: #f7d6de;
+  --fgpb-recs-ink: #1f4d3a;
+  --fgpb-recs-badge: #1aa6a0;
+  --fgpb-recs-card: #ffffff;
+  width: 100%;
+  margin: 1.25rem 0 1.35rem;
+  padding: 14px 12px 16px;
+  border-radius: 14px;
+  background: var(--fgpb-recs-bg);
+  color: #111;
+  box-sizing: border-box;
+}
+
+.fgpb-recs[hidden],
+.fgpb-recs.fgpb-hide-empty {
+  display: none !important;
+}
+
+.fgpb-recs__header {
+  margin: 0 4px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fgpb-recs__header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.fgpb-recs__close {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin: -4px -4px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.08);
+  color: #111;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fgpb-recs__close:hover {
+  background: rgba(17, 24, 39, 0.14);
+}
+
+.fgpb-recs__heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--fgpb-recs-ink);
+}
+
+.fgpb-recs__description {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(31, 77, 58, 0.78);
+  white-space: pre-wrap;
+}
+
+.fgpb-recs__status {
+  margin: 0 4px 10px;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.65);
+}
+
+.fgpb-recs__grid {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 6px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.fgpb-recs__grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.fgpb-recs__grid::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.18);
+  border-radius: 999px;
+}
+
+.fgpb-recs__card {
+  flex: 0 0 min(78%, 280px);
+  scroll-snap-align: start;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--fgpb-recs-card);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.fgpb-recs__media {
+  width: 78px;
+  height: 78px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f3f3;
+  align-self: center;
+}
+
+.fgpb-recs__media img,
+.fgpb-recs__placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fgpb-recs__placeholder {
+  background: linear-gradient(135deg, #f0f0f0, #e8e8e8);
+}
+
+.fgpb-recs__body {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 6px;
+}
+
+.fgpb-recs__title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: #111;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fgpb-recs__prices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.fgpb-recs__compare {
+  font-size: 12px;
+  color: #9a9a9a;
+  text-decoration: line-through;
+}
+
+.fgpb-recs__price {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111;
+}
+
+.fgpb-recs__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.fgpb-recs__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--fgpb-recs-badge);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fgpb-recs__badge[hidden] {
+  display: none !important;
+}
+
+.fgpb-recs__btn {
+  height: 30px;
+  min-width: 72px;
+  padding: 0 12px;
+  border: 1px solid #111;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.fgpb-recs__btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.fgpb-recs--drawer {
+  margin: 12px 0 0;
+  padding: 12px 14px 14px;
+  border-radius: 10px;
+  border-left: none;
+  border-right: none;
+  flex-shrink: 0;
+}
+
+.fgpb-recs--drawer .fgpb-recs__heading {
+  font-size: 14px;
+}
+
+.fgpb-recs--drawer .fgpb-recs__close {
+  width: 26px;
+  height: 26px;
+  font-size: 18px;
+}
+
+.fgpb-recs--drawer .fgpb-recs__card {
+  flex-basis: min(78%, 220px);
+  min-height: 92px;
+}
+
+.fgpb-recs--drawer .fgpb-recs__media {
+  width: 72px;
+  min-width: 72px;
+}
+
+.fgpb-recs--drawer .fgpb-recs__title {
+  font-size: 10.5px;
+  font-weight: 600;
+  -webkit-line-clamp: 1;
+}
+
+.fgpb-recs--drawer .fgpb-recs__btn {
+  font-size: 11px;
+  padding: 5px 8px;
+}
+
+@media (min-width: 750px) {
+  .fgpb-recs {
+    padding: 16px 16px 18px;
+  }
+
+  .fgpb-recs__heading {
+    font-size: 16px;
+  }
+
+  .fgpb-recs__card {
+    flex-basis: min(46%, 320px);
+  }
+}
+
+/* Template variants (data-fg-tpl set by bar-height.js from campaign settings) */
+.fgpb-progress-card[data-fg-tpl="minimal"] {
+  box-shadow: none;
+  border-color: rgba(17, 24, 39, 0.06);
+  border-radius: min(var(--fg-r, 8px), 8px);
+}
+
+.fgpb-progress-card[data-fg-tpl="gradient"] {
+  background: linear-gradient(135deg, var(--fg-bg, #f8fafc) 0%, color-mix(in srgb, var(--fg-b, #111) 20%, var(--fg-bg, #f8fafc)) 100%);
+}
+
+.fgpb-progress-card[data-fg-tpl="cart-drawer"] {
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 0;
+}
+
+.fgpb-progress-card[data-fg-tpl="mobile-compact"] {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.fgpb-progress-card[data-fg-tpl="mobile-compact"] .fgpb-progress-heading {
+  font-size: var(--fg-hs, 13px);
+  font-weight: 600;
+}
+
+.fgpb-progress-card[data-fg-tpl="mobile-compact"] .fgpb-progress-text {
+  font-size: var(--fg-ts, 11px);
+}
+
+.fgpb-progress-card[data-fg-tpl="celebration"] {
+  background: linear-gradient(
+    160deg,
+    var(--fg-bg, #f8fafc) 0%,
+    color-mix(in srgb, var(--fg-b, #111) 16%, var(--fg-bg, #f8fafc)) 52%,
+    var(--fg-bg, #f8fafc) 100%
+  );
+  border-color: color-mix(in srgb, var(--fg-b, #111) 35%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--fg-b, #111) 16%, transparent);
+  border-radius: max(var(--fg-r, 14px), 14px);
+}
+
+.fgpb-progress-card[data-fg-tpl="celebration"] .fgpb-progress-track {
+  background: color-mix(in srgb, var(--fg-b, #111) 14%, transparent);
+}
+
+.fgpb-progress-card[data-fg-tpl="celebration"] .fgpb-progress-fill {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--fg-b, #111) 80%, #fff), var(--fg-b, #111));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--fg-b, #111) 40%, transparent);
+}
+
+.fgpb-progress-card[data-fg-tpl="gradient"] .fgpb-progress-fill {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--fg-b, #111) 85%, #fff), var(--fg-b, #111));
+}
+
+.fgpb-progress-card[data-fg-tpl="minimal"] .fgpb-progress-heading {
+  font-weight: 600;
+}
+
+/* Cart drawer: flush strip under the header — keep vertical padding modest. */
+cart-drawer .fgpb-progress-card:not([data-fg-strip]):not(.fgpb-progress-strip),
+#CartDrawer .fgpb-progress-card:not([data-fg-strip]):not(.fgpb-progress-strip),
+.cart-drawer .fgpb-progress-card:not([data-fg-strip]):not(.fgpb-progress-strip) {
+  width: auto;
+  margin: 0;
+  padding: var(--fg-pad, 10px) 1.5rem;
+  border: none;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 0;
+  box-shadow: none;
+  max-height: none;
+}
+
+/* Cart page: hide theme "Product / Total" column headers + divider under the gift strip */
+#main-cart-items thead,
+[id^="main-cart-items"] thead,
+.cart-items thead,
+cart-items thead,
+#main-cart-items .cart-items__heading,
+[id^="main-cart-items"] .cart-items__heading,
+.cart-items .title-wrapper-with-link + .cart-items thead {
+  display: none !important;
+}
+
+#main-cart-items table,
+[id^="main-cart-items"] table,
+.cart-items table {
+  border-top: none !important;
+}
+
+#main-cart-items tbody tr:first-child,
+[id^="main-cart-items"] tbody tr:first-child,
+.cart-items tbody tr:first-child {
+  border-top: none !important;
+}
+
+/* Product page auto-mount */
+.fgpb-progress-card[data-pp] {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 1rem;
+}
+
+cart-drawer .fgpb-progress-heading,
+#CartDrawer .fgpb-progress-heading,
+.cart-drawer .fgpb-progress-heading {
+  margin: 0 0 var(--fg-gap, 8px);
+  font-size: var(--fg-hs, 13px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+cart-drawer .fgpb-progress-text,
+#CartDrawer .fgpb-progress-text,
+.cart-drawer .fgpb-progress-text {
+  margin: var(--fg-gap, 8px) 0 0;
+  font-size: var(--fg-ts, 12px);
+  line-height: 1.4;
+  opacity: 1;
+  color: var(--fg-t, #111827);
+  font-weight: 600;
+}
+
+.fgpb-progress-card[data-cp] {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1.25rem;
+  padding: var(--fg-pad, 10px) 12px;
+  box-shadow: none;
+}
+
+/* Cart page strip — promo banner + remaining line + rail with gift milestone */
+.fgpb-progress-card.fgpb-progress-strip[data-cp],
+.fgpb-progress-card[data-fg-strip="1"] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 1.1rem;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  background: #fff !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+  color: #111;
+}
+
+/* Must beat strip `display: block` when cart is empty / campaign off */
+.fgpb-progress-card[hidden],
+.fgpb-progress-card.fgpb-hide-empty,
+[data-fgpb-recs][hidden],
+[data-fgpb-recs].fgpb-hide-empty {
+  display: none !important;
+}
+
+.fgpb-progress-card.fgpb-progress-strip[data-cp] .fgpb-progress-text,
+.fgpb-progress-card.fgpb-progress-strip[data-cp] .fgpb-progress-cta-wrap,
+.fgpb-progress-card[data-fg-strip="1"] .fgpb-progress-text,
+.fgpb-progress-card[data-fg-strip="1"] .fgpb-progress-cta-wrap {
+  display: none !important;
+}
+
+.fgpb-strip-banner {
+  background: var(--fg-strip-accent, #4a5c3a);
+  color: var(--fg-strip-banner-text, #fff);
+  text-align: center;
+  padding: 10px 14px 9px;
+}
+
+.fgpb-progress-strip.is-compact .fgpb-strip-banner {
+  padding: 8px 12px 7px;
+}
+
+.fgpb-strip-banner__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+.fgpb-strip-banner__sub {
+  margin: 3px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.9;
+  line-height: 1.3;
+}
+
+.fgpb-strip-banner__sub[hidden] {
+  display: none !important;
+}
+
+.fgpb-strip-body {
+  padding: 12px 14px 14px;
+  background: var(--fg-strip-body-bg, #fff);
+}
+
+.fgpb-progress-strip.is-compact .fgpb-strip-body {
+  padding: 10px 12px 12px;
+}
+
+.fgpb-progress-card.fgpb-progress-strip[data-cp] .fgpb-progress-heading,
+.fgpb-progress-card[data-fg-strip="1"] .fgpb-progress-heading {
+  display: block !important;
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--fg-t, #1a1a1a);
+}
+
+.fgpb-strip-rail {
+  position: relative;
+  padding: 18px 22px 28px 8px;
+}
+
+.fgpb-strip-rail--tiers {
+  padding: 22px 12px 32px;
+}
+
+.fgpb-strip-milestones {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.fgpb-progress-card.fgpb-progress-strip[data-cp] .fgpb-progress-track,
+.fgpb-progress-card[data-fg-strip="1"] .fgpb-progress-track {
+  margin: 0;
+  height: var(--fg-h, 6px) !important;
+  min-height: var(--fg-h, 6px) !important;
+  border-radius: var(--fg-strip-r, 999px);
+  background: var(--fg-strip-track, rgba(17, 24, 39, 0.08));
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.fgpb-progress-card.fgpb-progress-strip[data-cp] .fgpb-progress-fill,
+.fgpb-progress-card[data-fg-strip="1"] .fgpb-progress-fill {
+  border-radius: inherit;
+  background-color: var(--fg-b, #5c4a3a);
+  min-width: 0;
+}
+
+/* Keep drawer strip visible while totals refresh (empty-cart hide rules below). */
+.fgpb-strip-mark {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(8px);
+  pointer-events: none;
+}
+
+.fgpb-strip-mark--tier {
+  right: auto;
+  width: 52px;
+  transform: translateX(-50%);
+}
+
+.fgpb-strip-mark__amount {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8a8a8a;
+  line-height: 1;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  transition: color 200ms ease;
+}
+
+.fgpb-strip-mark__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1.5px solid var(--fg-strip-mark-border, rgba(17, 24, 39, 0.14));
+  color: var(--fg-b, #5c4a3a);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fgpb-progress-strip.is-complete .fgpb-strip-mark__icon,
+.fgpb-strip-mark--tier.is-unlocked .fgpb-strip-mark__icon {
+  background: var(--fg-b, #5c4a3a);
+  border-color: var(--fg-b, #5c4a3a);
+  color: #fff;
+  transform: scale(1.04);
+}
+
+.fgpb-strip-mark--tier.is-unlocked .fgpb-strip-mark__amount,
+.fgpb-progress-strip.is-complete .fgpb-strip-mark__amount {
+  color: #555;
+}
+
+.fgpb-strip-mark__caption {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.02em;
+  transition: color 200ms ease;
+}
+
+/*
+  Drawer strip chrome. Never set visibility:visible on this node while the
+  host is closed — a visible child of a visibility:hidden parent still paints
+  (CSS spec) and leaks from the right under the cart icon.
+*/
+cart-drawer:not(.active):not(.is-open):not(.open) .fgpb-progress-card[data-fg-drawer],
+cart-drawer[aria-hidden="true"] .fgpb-progress-card[data-fg-drawer],
+.drawer:not(.active):not(.is-open):not(.open) .fgpb-progress-card[data-fg-drawer],
+.fgpb-progress-card[data-fg-drawer]:not([data-fgpb-open="1"]) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Plain drawer placeholder — layout only once the drawer is open */
+cart-drawer.active .fgpb-progress-card[data-fg-drawer],
+cart-drawer.is-open .fgpb-progress-card[data-fg-drawer],
+cart-drawer[aria-hidden="false"] .fgpb-progress-card[data-fg-drawer],
+.drawer.active .fgpb-progress-card[data-fg-drawer],
+.fgpb-progress-card[data-fg-drawer][data-fgpb-open="1"] {
+  margin: 0 0 0.75rem !important;
+  padding: 12px 1.5rem !important;
+  border: none;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #fff;
+}
+
+cart-drawer .fgpb-progress-card[data-fg-drawer][hidden],
+#CartDrawer .fgpb-progress-card[data-fg-drawer][hidden],
+.cart-drawer .fgpb-progress-card[data-fg-drawer][hidden],
+cart-drawer .fgpb-progress-card[data-fg-drawer].fgpb-hide-empty,
+#CartDrawer .fgpb-progress-card[data-fg-drawer].fgpb-hide-empty,
+.cart-drawer .fgpb-progress-card[data-fg-drawer].fgpb-hide-empty {
+  display: none !important;
+}
+
+/* Converted tiered/cart strip — full-bleed under "Your cart" */
+cart-drawer .fgpb-progress-card.fgpb-progress-strip[data-fg-drawer],
+#CartDrawer .fgpb-progress-card.fgpb-progress-strip[data-fg-drawer],
+.cart-drawer .fgpb-progress-card.fgpb-progress-strip[data-fg-drawer] {
+  min-height: 96px;
+  padding: 0 !important;
+  border-bottom: none;
+  background: transparent;
+  max-width: none;
+  flex-shrink: 0;
+}
+
+cart-drawer .drawer__footer,
+#CartDrawer .drawer__footer,
+.cart-drawer .drawer__footer,
+cart-drawer .cart-drawer__footer,
+#CartDrawer .cart-drawer__footer,
+.cart-drawer .cart-drawer__footer {
+  flex-shrink: 0;
+}
+
+cart-drawer .fgpb-strip-banner,
+#CartDrawer .fgpb-strip-banner,
+.cart-drawer .fgpb-strip-banner {
+  padding: 12px 14px 11px;
+}
+
+cart-drawer .fgpb-strip-banner__title,
+#CartDrawer .fgpb-strip-banner__title,
+.cart-drawer .fgpb-strip-banner__title {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+cart-drawer .fgpb-strip-banner__sub,
+#CartDrawer .fgpb-strip-banner__sub,
+.cart-drawer .fgpb-strip-banner__sub {
+  font-size: 12px;
+}
+
+.fgpb-progress-heading {
+  margin: 0 0 var(--fg-gap, 10px);
+  font-size: var(--fg-hs, 15px);
+  font-weight: 700;
+  line-height: 1.35;
+  transition: color 180ms ease;
+}
+
+.fgpb-progress-card[data-cp] .fgpb-progress-heading {
+  margin: 0 0 var(--fg-gap, 6px);
+  font-size: var(--fg-hs, 13px);
+  font-weight: 600;
+}
+
+.fgpb-progress-track {
+  width: 100%;
+  height: var(--fg-h, 10px) !important;
+  min-height: var(--fg-h, 10px);
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.12);
+  box-sizing: border-box;
+  /* Isolate paint so fill transforms don’t dirty neighboring cart UI */
+  contain: paint;
+}
+
+.fgpb-progress-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: var(--fg-b, #111111);
+  /* GPU transform — presentation only; progress value still set by existing JS */
+  transform: scaleX(var(--fg-p, 0));
+  transform-origin: left center;
+  transition: transform 240ms ease-out;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fgpb-progress-fill,
+  .fgpb-strip-mark__icon,
+  .fgpb-strip-mark__amount,
+  .fgpb-strip-mark__caption,
+  .fgpb-progress-heading {
+    transition: none !important;
+  }
+
+  .fgpb-progress-fill {
+    will-change: auto;
+  }
+
+  .fgpb-progress-strip.is-complete .fgpb-strip-mark__icon,
+  .fgpb-strip-mark--tier.is-unlocked .fgpb-strip-mark__icon {
+    transform: none;
+  }
+}
+
+.fgpb-progress-text {
+  margin: var(--fg-gap, 10px) 0 0;
+  font-size: var(--fg-ts, 13px);
+  line-height: 1.4;
+  /* Full opacity — faded text disappears on saturated campaign backgrounds */
+  opacity: 1;
+  color: var(--fg-t, #111827);
+  font-weight: 500;
+}
+
+.fgpb-progress-card[data-cp] .fgpb-progress-text {
+  margin: var(--fg-gap, 6px) 0 0;
+  font-size: var(--fg-ts, 12px);
+}
+
+.fgpb-claim-gift {
+  display: block;
+  width: 100%;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.fgpb-claim-gift[hidden] {
+  display: none !important;
+}
+
+.fgpb-claim-gift:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.fgpb-claim-hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #b42318;
+  font-weight: 600;
+}
+
+.fgpb-claim-hint[hidden] {
+  display: none !important;
+}
+
+.fgpb-clear-cart {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border: 1px solid #b42318;
+  border-radius: 6px;
+  background: #fff;
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fgpb-clear-cart[hidden] {
+  display: none !important;
+}
+
+.fgpb-emergency-clear {
+  margin: 12px 16px;
+  padding: 12px;
+  border: 1px solid #b42318;
+  border-radius: 8px;
+  background: #fef3f2;
+  text-align: center;
+}
+
+.fgpb-emergency-clear__msg {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b42318;
+  line-height: 1.35;
+}
+
+.fgpb-emergency-clear__btn {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #b42318;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fgpb-emergency-clear__alt {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: #667085;
+}
+
+.fgpb-emergency-clear__alt a {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.fgpb-gift-line quantity-input,
+.fgpb-gift-line .quantity,
+.fgpb-gift-line .cart-item__quantity,
+.fgpb-gift-line .cart-item__quantity-wrapper,
+.fgpb-gift-line cart-remove-button,
+.fgpb-gift-line .cart-remove,
+.fgpb-gift-line button[name="plus"],
+.fgpb-gift-line button[name="minus"],
+.fgpb-gift-line input[name="updates[]"],
+.fgpb-gift-line input[type="number"],
+.fgpb-gift-line a[href*="quantity=0"],
+.fgpb-gift-line .cart-item__quantity-wrapper ~ *,
+.fgpb-gift-line .quantity-popover {
+  display: none !important;
+}
+
+/* FREE GIFT label — single bold line only */
+.fgpb-gift-line {
+  position: relative;
+}
+
+/*
+  Visual pin only. Do not move Dawn cart-item nodes — that invalidates the
+  positional `line` index Dawn sends to /cart/change.js. Flex + order keeps
+  every tagged gift together at the top of the list.
+*/
+cart-drawer .cart-items,
+#CartDrawer .cart-items,
+cart-drawer-items .cart-items,
+#CartDrawer-CartItems.cart-items,
+#CartDrawer-CartItems .cart-items {
+  display: flex !important;
+  flex-direction: column;
+}
+
+cart-drawer .cart-item.fgpb-gift-line,
+#CartDrawer .cart-item.fgpb-gift-line,
+cart-drawer-items .cart-item.fgpb-gift-line,
+#CartDrawer-CartItems .cart-item.fgpb-gift-line {
+  order: -1;
+}
+
+#main-cart-items tbody,
+[id^="main-cart-items"] tbody,
+cart-items tbody {
+  display: flex;
+  flex-direction: column;
+}
+
+#main-cart-items tbody > tr,
+[id^="main-cart-items"] tbody > tr,
+cart-items tbody > tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+#main-cart-items tbody > tr.fgpb-gift-line,
+[id^="main-cart-items"] tbody > tr.fgpb-gift-line,
+cart-items tbody > tr.fgpb-gift-line {
+  order: -1;
+}
+
+/* Never show money on gift lines — not even ₹0 / Rs. 0.00 */
+.fgpb-gift-line .price,
+.fgpb-gift-line .price-item,
+.fgpb-gift-line .cart-item__old-price,
+.fgpb-gift-line .cart-item__discounted-prices,
+.fgpb-gift-line .cart-item__final-price,
+.fgpb-gift-line .product-option--price,
+.fgpb-gift-line s.price-item,
+.fgpb-gift-line .unit-price,
+.fgpb-gift-line .cart-item__details .price,
+.fgpb-gift-line .cart-item__details .price-item,
+.fgpb-gift-line .cart-item__totals,
+.fgpb-gift-line .cart-item__price {
+  display: none !important;
+}
+
+/* Hide property rows + theme discount chips — we render one FREE GIFT label only */
+.fgpb-gift-line .product-option,
+.fgpb-gift-line dl.product-option,
+.fgpb-gift-line .cart-item__discounted,
+.fgpb-gift-line .discounts,
+.fgpb-gift-line .discounts__discount,
+.fgpb-gift-line .cart-item__error {
+  display: none !important;
+}
+
+/* Badge owns its type. Do not nest this under .fgpb-gift-line only — Dawn
+   remounts wipe that class for a frame and the theme caption font leaks in. */
+.fgpb-free-gift-badge,
+.fgpb-gift-line .fgpb-free-gift-badge,
+.fgpb-optimistic-gift .fgpb-free-gift-badge {
+  display: block !important;
+  margin-top: 4px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #0b0b0b !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  line-height: 1.3 !important;
+  box-shadow: none !important;
+}
+
+.fgpb-gift-line .fgpb-gift-price,
+.fgpb-gift-line .fgpb-gift-price--details,
+.fgpb-gift-line .fgpb-price-host {
+  display: none !important;
+}
+
+/* Theme-agnostic: only our own wrappers — never restyle theme cart lines */
+.fgpb-cart-host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fgpb-cart-host[data-fgpb-cart-host="fallback"] {
+  margin: 0 0 12px;
+}
+
+/* Unlock placeholder — outside cart-drawer-items so Dawn `line` indexes stay valid */
+[data-fgpb-optimistic-gifts] {
+  padding: 0 1.5rem 10px;
+}
+.fgpb-optimistic-gift {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0 4px;
+  pointer-events: none;
+}
+.fgpb-optimistic-gift img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.fgpb-optimistic-gift .cart-item__name {
+  font-weight: 600;
+  color: inherit;
+  text-decoration: none;
+}
+.fgpb-optimistic-gift .fgpb-free-gift-badge {
+  margin-top: 4px;
+}

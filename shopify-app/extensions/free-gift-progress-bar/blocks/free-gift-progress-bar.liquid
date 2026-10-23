@@ -1,0 +1,180 @@
+{% liquid
+  assign bar_color = block.settings.bar_color | default: "#111111"
+  assign background_color = block.settings.background_color | default: "#f8fafc"
+  assign text_color = block.settings.text_color | default: "#111827"
+  assign border_radius = block.settings.border_radius | default: 14
+  assign show_button = block.settings.show_button | default: false
+  assign button_text = block.settings.button_text | default: "Continue Shopping"
+  assign heading_text = block.settings.heading_text | default: "Add more to unlock your free gift"
+  assign description_text = block.settings.description_text | default: "Free gifts unlock as you shop"
+%}
+{% assign fgpb_sync = '164' %}
+{% comment %}
+  Merchants often add only this product-section block. Cart-drawer chrome and
+  gift mutation live in the satellites below. Each asset is idempotent if the
+  body embed also loads them.
+{% endcomment %}
+{% assign fgpb_asset_name = 'fgpb-runtime.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'theme-surface.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'cart-page-progress.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'bar-height.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'unlock-celebrate.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{% assign fgpb_asset_name = 'tiered-gift-sync.js' %}
+{% render 'fgpb-script', fgpb_asset_name: fgpb_asset_name, fgpb_sync: fgpb_sync %}
+{{ 'cart-recommendations.css' | asset_url | stylesheet_tag }}
+
+<div
+  class="fgpb-progress-card"
+  data-pp="1"
+  data-fgpb-section-boot="1"
+  data-widget-state-url="/apps/free-gift/widget-state"
+  data-auto-add-gift="{% if block.settings.auto_add_gift == false %}false{% else %}true{% endif %}"
+  data-override-bar-color="{{ bar_color }}"
+  data-override-background-color="{{ background_color }}"
+  data-override-text-color="{{ text_color }}"
+  data-override-border-radius="{{ border_radius }}"
+  hidden
+  style="
+    --fg-b: {{ bar_color }};
+    --fg-bg: {{ background_color }};
+    --fg-t: {{ text_color }};
+    --fg-r: {{ border_radius }}px;
+  "
+>
+  <p class="fgpb-progress-heading">{{ heading_text }}</p>
+
+  <div
+    class="fgpb-progress-track"
+    role="progressbar"
+    aria-label="Free gift progress"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow="0"
+    aria-valuetext="Free gift progress"
+  >
+    <span class="fgpb-progress-fill" style="--fg-p: 0;"></span>
+  </div>
+
+  <p class="fgpb-progress-text">{{ description_text }}</p>
+
+  {% if show_button %}
+    <div class="fgpb-progress-cta-wrap">
+      <a class="fgpb-progress-cta" href="{{ routes.cart_url }}">
+        {{ button_text }}
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+{% if request.design_mode %}
+  {% comment %}
+    Keep an inactive or still-loading block selectable in the theme editor.
+    The real card remains fail-closed on the storefront. Once it becomes
+    visible, its following-sibling placeholder is hidden without extra JS.
+  {% endcomment %}
+  <style>
+    .fgpb-progress-card[data-pp="1"]:not([hidden]):not(.fgpb-hide-empty) ~ .fgpb-editor-placeholder {
+      display: none;
+    }
+  </style>
+  <div
+    class="fgpb-editor-placeholder"
+    role="status"
+    style="padding: 16px; margin: 12px 0; border: 1px dashed #64748b; border-radius: 8px; background: #f8fafc; color: #111827;"
+  >
+    <strong>UpsellTrix product block</strong>
+    <p style="margin: 8px 0 0;">
+      Your block is added. Save the theme, then activate a campaign with Product page placement in UpsellTrix to show gift progress to customers.
+    </p>
+    <p style="margin: 8px 0 0; font-size: 0.875em;">This setup message appears only in the theme editor.</p>
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "UpsellTrix",
+  "target": "section",
+  "stylesheet": "free-gift-progress-bar.css",
+  "javascript": "free-gift-progress-bar.js",
+  "settings": [
+    {
+      "type": "number",
+      "id": "threshold_amount",
+      "label": "Threshold amount",
+      "default": 999
+    },
+    {
+      "type": "text",
+      "id": "heading_text",
+      "label": "Heading text",
+      "default": "Add more to unlock your free gift"
+    },
+    {
+      "type": "text",
+      "id": "description_text",
+      "label": "Description text",
+      "default": "Free gifts unlock as you shop"
+    },
+    {
+      "type": "range",
+      "id": "progress_percent",
+      "label": "Progress percent",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50
+    },
+    {
+      "type": "color",
+      "id": "bar_color",
+      "label": "Bar color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#f8fafc"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#111827"
+    }
+    ,
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 14
+    },
+    {
+      "type": "checkbox",
+      "id": "show_button",
+      "label": "Show button",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_add_gift",
+      "label": "Automatically add free gift",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Continue Shopping"
+    }
+  ]
+}
+{% endschema %}

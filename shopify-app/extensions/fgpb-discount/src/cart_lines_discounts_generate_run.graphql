@@ -1,0 +1,40 @@
+query Input {
+  presentmentCurrencyRate
+  cart {
+    cost {
+      subtotalAmount {
+        amount
+      }
+    }
+    lines {
+      id
+      quantity
+      cost {
+        subtotalAmount {
+          amount
+        }
+      }
+      freeGift: attribute(key: "_fgpb_free_gift") {
+        value
+      }
+      campaignId: attribute(key: "_fgpb_campaign_id") {
+        value
+      }
+      tierId: attribute(key: "_fgpb_tier_id") {
+        value
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+        }
+      }
+    }
+  }
+  discount {
+    discountClasses
+    metafield(namespace: "$app", key: "discount_config") {
+      jsonValue
+    }
+  }
+}

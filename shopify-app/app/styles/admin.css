@@ -1,0 +1,9 @@
+/*
+ * Single admin stylesheet entry point.
+ *
+ * Vite resolves these imports at build time, so Shopify Admin downloads one
+ * render-blocking stylesheet instead of two while preserving the existing
+ * cascade order and every selector exactly as authored.
+ */
+@import "./dashboard.css";
+@import "./professional.css";

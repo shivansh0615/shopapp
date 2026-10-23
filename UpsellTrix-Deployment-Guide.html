@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>UpsellTrix — Remaining Work and Shopify Deployment Guide</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 20mm 16mm;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      color: #1a1714;
+      background: #fff;
+      font-family: "Segoe UI", Calibri, system-ui, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+    }
+    h1 { font-size: 22pt; line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.03em; }
+    h2 {
+      font-size: 14pt;
+      margin: 22px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #c45d45;
+      page-break-after: avoid;
+    }
+    h3 { font-size: 11.5pt; margin: 16px 0 6px; color: #3d2f28; page-break-after: avoid; }
+    p { margin: 0 0 8px; }
+    ul, ol { margin: 0 0 10px; padding-left: 1.25rem; }
+    li { margin-bottom: 4px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 12px;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #d8d0c8;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #1a1214; color: #faf7f2; font-weight: 600; }
+    tr:nth-child(even) td { background: #f7f3ee; }
+    code, kbd {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.8pt;
+      background: #f3eee8;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    pre {
+      background: #1a1214;
+      color: #f4ebe3;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.2pt;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      page-break-inside: avoid;
+    }
+    .cover {
+      border: 1px solid #e6ddd4;
+      padding: 28px 28px 22px;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #faf7f2 0%, #fff 100%);
+    }
+    .kicker {
+      font-size: 9pt;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #c45d45;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .muted { color: #6b625a; }
+    .verdict {
+      background: #fff4ef;
+      border-left: 5px solid #c45d45;
+      padding: 10px 14px;
+      margin: 12px 0 16px;
+      page-break-inside: avoid;
+    }
+    .note {
+      background: #f4f7f4;
+      border-left: 5px solid #7d9a7e;
+      padding: 8px 12px;
+      margin: 10px 0 12px;
+      page-break-inside: avoid;
+    }
+    .warn {
+      background: #fff8e8;
+      border-left: 5px solid #d4a574;
+      padding: 8px 12px;
+      margin: 10px 0 12px;
+      page-break-inside: avoid;
+    }
+    .check { list-style: none; padding-left: 0; }
+    .check li { padding-left: 1.4rem; position: relative; }
+    .check li::before { content: "☐"; position: absolute; left: 0; }
+    .small { font-size: 9pt; color: #6b625a; }
+    .footer-note { margin-top: 24px; font-size: 8.5pt; color: #6b625a; }
+    .page-break { page-break-before: always; }
+    strong { font-weight: 650; }
+  </style>
+</head>
+<body>
+
+  <section class="cover">
+    <div class="kicker">Algorithmtrix Pvt. Ltd. · Internal operations</div>
+    <h1>UpsellTrix remaining work<br />and Shopify deployment guide</h1>
+    <p class="muted">Product: UpsellTrix (Shopify embedded app) · Version in repo: 0.1.0-private-beta · Date: 3 September 2026</p>
+    <p>This document is compiled from the repository’s own ops and App Store files. It does not invent a production hostname. Fill real HTTPS host, Postgres, and Partner credentials yourself.</p>
+    <div class="verdict">
+      <strong>Verdict:</strong> Spend X → Free Gift and Tiered Free Gifts are code-ready for a <em>private beta</em> on a real host.
+      The app is <strong>not</strong> ready to submit to the public Shopify App Store until production URLs, hosting, worker scheduling, listing assets, and a clean-store smoke test are complete.
+    </div>
+  </section>
+
+  <h2>1. What is already working</h2>
+  <p>Do not treat the following as unfinished product work. These paths exist in the Shopify app repo and have been treated as the stable vertical slice:</p>
+  <table>
+    <thead><tr><th>Area</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Spend X → Free Gift campaigns</td><td>Available. Merchant can create, activate, and run them. Gift lines are tagged; Discount Function zeros the price.</td></tr>
+      <tr><td>Tiered Free Gifts</td><td>Available in code (evaluator + sync). Must still be smoke-tested on a clean production-like store.</td></tr>
+      <tr><td>Admin (embedded)</td><td>Overview, Campaigns, Create promotion, Theme setup, Compatibility, Help, Settings.</td></tr>
+      <tr><td>Theme app embed</td><td>Display name UpsellTrix. Required for the progress bar. Draft theme ≠ live theme.</td></tr>
+      <tr><td>App Proxy</td><td>Storefront path <code>/apps/free-gift/*</code> → backend <code>/apps/proxy/*</code> (widget-state, evaluate-cart).</td></tr>
+      <tr><td>Discount Function</td><td>Extension <code>fgpb-discount</code>. Only lines with <code>_fgpb_free_gift</code> get 100% off.</td></tr>
+      <tr><td>Database</td><td>PostgreSQL via Prisma. Sessions stored in Postgres (not SQLite in production).</td></tr>
+      <tr><td>Compliance webhook routes</td><td>Implemented in-app (<code>customers/data_request</code>, <code>customers/redact</code>, <code>shop/redact</code>). Must still be <em>registered on the production app</em> via deploy.</td></tr>
+      <tr><td>Legal / support pages</td><td>Marketing site has <code>/privacy</code>, <code>/terms</code>, <code>/support</code>. Listing can use them only after that site is on a public HTTPS URL.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. What is remaining (do this before App Store submit)</h2>
+
+  <h3>A. Production hosting (blocking)</h3>
+  <ul class="check">
+    <li>Choose a real HTTPS host for the Node app (Fly, Render, Railway, Cloud Run, VM, etc.). Do not use the Shopify CLI tunnel as production.</li>
+    <li>TLS certificate for that host.</li>
+    <li>Dedicated production PostgreSQL (not the staging DB, not SQLite).</li>
+    <li>Automated Postgres backups.</li>
+    <li>Set production env vars in the platform secret store (never commit <code>.env</code>).</li>
+    <li>Generate production Shopify TOML from the real host (today <code>shopify.app.production.upselltrix.toml</code> still uses <code>fgpb-ci.myexample.com</code> — treat as a placeholder until you generate from your host).</li>
+    <li>Local <code>shopify.app.upselltrix.toml</code> correctly keeps <code>example.com</code> for CLI tunnel rewriting. Do not submit using that file’s URLs.</li>
+  </ul>
+
+  <h3>B. Git / release hygiene (blocking)</h3>
+  <ul class="check">
+    <li>Review and commit the large uncommitted Shopify-app working tree on a clean branch (or discard what should not ship).</li>
+    <li>Review and commit marketing-site screenshot section if that site is part of listing URLs.</li>
+    <li>Do not deploy from mixed local tunnels + uncommitted Discount Function / storefront files unless that is the intended release.</li>
+    <li>Run <code>npm run check:release</code> on the commit you will deploy. Fix failures before deploy.</li>
+  </ul>
+
+  <h3>C. Shopify Partner app configuration (blocking)</h3>
+  <ul class="check">
+    <li>Production <code>application_url</code> = your real HTTPS origin.</li>
+    <li>Auth redirect = <code>https://YOUR_HOST/auth/callback</code> (must match runtime prefix <code>/auth</code>, not <code>/api/auth</code>).</li>
+    <li>App proxy URL = <code>https://YOUR_HOST/apps/proxy</code>, subpath <code>free-gift</code>, prefix <code>apps</code>.</li>
+    <li>Embedded app enabled.</li>
+    <li>Scopes stay: <code>read_discounts,write_discounts,read_publications,read_products</code> unless product/legal review expands them.</li>
+    <li>Webhooks live on production: <code>app/uninstalled</code>, <code>app/scopes_update</code>, compliance topics.</li>
+    <li>Theme app extension deployed with merchant-facing name <strong>UpsellTrix</strong>.</li>
+    <li>Discount Function deployed with the same production app.</li>
+  </ul>
+
+  <h3>D. Discount-sync worker (blocking)</h3>
+  <p>Creating the worker code is not enough. Production must <strong>schedule</strong> it.</p>
+  <ul class="check">
+    <li>Run <code>npm run discount-sync:once</code> every 1–2 minutes as a separate process (recommended), or run <code>npm run discount-sync:watch</code> as a dedicated process.</li>
+    <li>Same code version and secrets as the web process.</li>
+    <li>Do not embed the worker inside every web replica.</li>
+    <li>After go-live: <code>npm run discount-sync:inspect</code> shows a healthy or empty queue.</li>
+  </ul>
+
+  <h3>E. App Store listing (blocking for public submit)</h3>
+  <ul class="check">
+    <li>App icon 1200×1200 uploaded (not logo-only feature media).</li>
+    <li>Paste listing copy only from <code>docs/app-store/listing-copy.md</code> (FINAL — SAFE TO PASTE).</li>
+    <li>Pricing: Free (private beta). Do not invent paid plans.</li>
+    <li>Privacy policy URL and support URL live (marketing site deployed).</li>
+    <li>Support email: <code>support@upselltrix.algorithmtrix.com</code>.</li>
+    <li>Screenshots: unique, 1600×900, real UI, clean demo store (not campaign name “ooo”).</li>
+    <li>Demo screencast linked.</li>
+    <li>Reviewer instructions pasted (fill placeholders in <code>docs/app-store/reviewer-instructions.md</code>).</li>
+    <li>Partner Dashboard automated checks actually run (session token, app URL, redirects). Do not tick them from memory.</li>
+    <li>Protected customer data declaration matches real scopes and storage.</li>
+  </ul>
+
+  <h3>F. Functional smoke on a clean store (blocking)</h3>
+  <ul class="check">
+    <li>Install → Overview loads as UpsellTrix.</li>
+    <li>Enable theme embed on the theme you preview → save.</li>
+    <li>Create Spend X → Free Gift → activate → progress bar + free gift on Add to cart → cart → checkout.</li>
+    <li>Drop below threshold → gift removed.</li>
+    <li>Create a Tiered Free Gifts campaign and smoke it.</li>
+    <li>Mystery Gift is not creatable (coming soon only).</li>
+    <li>Uninstall does not error; reinstall works.</li>
+    <li>Shop A cannot see Shop B campaigns.</li>
+  </ul>
+
+  <h3>G. Intentionally not in this launch (do not list as live)</h3>
+  <table>
+    <thead><tr><th>Item</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td>Mystery Gift</td><td>Coming soon. UI stub. Do not advertise as available.</td></tr>
+      <tr><td>Buy it now / Shop Pay / accelerated checkout gifts</td><td>Not supported. Gifts need Add to cart → cart → checkout.</td></tr>
+      <tr><td>Paid Shopify Billing plans</td><td>Not implemented. Launch is free.</td></tr>
+      <tr><td>Universal theme / every third-party drawer</td><td>Dawn / Online Store 2.0 is the verified path.</td></tr>
+      <tr><td>Analytics trend charts</td><td>Coming soon in admin.</td></tr>
+      <tr><td>Percentage / fixed discount as new product</td><td>Beta / hidden from create. Do not primary-market.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="page-break">3. Two different “deploys”</h2>
+  <table>
+    <thead><tr><th></th><th>A. Host the Node app</th><th>B. Shopify CLI deploy</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>What it does</td>
+        <td>Puts your Admin + App Proxy + webhooks on the internet (<code>npm run start</code>).</td>
+        <td>Pushes app config, theme extension, and Discount Function to the Partner app.</td>
+      </tr>
+      <tr>
+        <td>When</td>
+        <td>First. Shopify must call a real HTTPS URL.</td>
+        <td>After TOML is generated from that URL and validated.</td>
+      </tr>
+      <tr>
+        <td>Command</td>
+        <td>Platform start / Docker <code>npm run start</code></td>
+        <td><code>npm run deploy:production</code> with production TOML</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>Local <code>shopify app dev</code> is <strong>not</strong> a production deploy. It tunnels to your laptop.</p>
+
+  <h2>4. What you must have before starting</h2>
+  <table>
+    <thead><tr><th>Input</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>HTTPS origin you control, e.g. <code>https://app.yourdomain.com</code></td><td><code>SHOPIFY_APP_URL</code>, TOML generate/deploy</td></tr>
+      <tr><td>PostgreSQL URL (production, dedicated)</td><td><code>DATABASE_URL</code> for web, worker, migrate</td></tr>
+      <tr><td>Shopify API key (client ID) and API secret</td><td>Partner app UpsellTrix — from Partner Dashboard</td></tr>
+      <tr><td>Scopes string matching TOML</td><td><code>SCOPES=read_discounts,write_discounts,read_publications,read_products</code></td></tr>
+      <tr><td>Secret store on the host</td><td>Inject env; never bake into the Docker image</td></tr>
+      <tr><td>Scheduler (cron / platform job)</td><td><code>discount-sync:once</code> every 1–2 minutes</td></tr>
+      <tr><td>Shopify Partner access to the UpsellTrix app</td><td>CLI deploy; listing later</td></tr>
+    </tbody>
+  </table>
+  <div class="warn"><strong>Do not guess hostnames.</strong> If you do not have a real host yet, stop after local testing. Do not run <code>shopify app deploy</code> with <code>example.com</code> as production.</div>
+
+  <h2>5. Required environment variables (production web + worker)</h2>
+  <table>
+    <thead><tr><th>Variable</th><th>Rules</th></tr></thead>
+    <tbody>
+      <tr><td><code>NODE_ENV</code></td><td>Must be <code>production</code> (enables fail-fast checks)</td></tr>
+      <tr><td><code>PORT</code></td><td>Optional; default 3000</td></tr>
+      <tr><td><code>DATABASE_URL</code></td><td><code>postgres://</code> or <code>postgresql://</code> only. Not <code>file:</code></td></tr>
+      <tr><td><code>SHOPIFY_API_KEY</code></td><td>Client ID; required</td></tr>
+      <tr><td><code>SHOPIFY_API_SECRET</code></td><td>Required; never log or commit</td></tr>
+      <tr><td><code>SHOPIFY_APP_URL</code></td><td>HTTPS; no localhost; no <code>example.com</code> / <code>*.example.com</code></td></tr>
+      <tr><td><code>SCOPES</code></td><td>Must match TOML access scopes</td></tr>
+    </tbody>
+  </table>
+  <p class="small">Worker uses the same Shopify + database variables. Optional: <code>DISCOUNT_SYNC_WORKER_DISABLED=true</code> to stop claiming jobs during incidents.</p>
+  <pre>NODE_ENV=production npm run validate:env</pre>
+  <p>That command must succeed with the real production values before you serve traffic.</p>
+
+  <h2>6. Detailed deployment steps (in order)</h2>
+  <p>Work from the Shopify app folder:</p>
+  <pre>cd C:\Users\Admin\OneDrive\Desktop\UpsellTrix\shopify-app</pre>
+  <p>Use the <strong>UpsellTrix</strong> config template, not the legacy Free Gift Progress Bar default, unless you are sure you want the other Partner app:</p>
+  <ul>
+    <li>Preferred template: <code>shopify.app.upselltrix.toml</code></li>
+    <li>Legacy template: <code>shopify.app.toml</code></li>
+  </ul>
+
+  <h3>Step 1 — Freeze the code you will ship</h3>
+  <ol>
+    <li>Create a release branch from reviewed, committed code.</li>
+    <li>Do not include <code>.env</code> files.</li>
+    <li>Run the full gate (this takes a while):</li>
+  </ol>
+  <pre>npm run check:release</pre>
+  <p>This runs deployment-readiness, secret scan, Prisma validate, typecheck, lint, backend/compliance/promotion/discount/storefront tests, and <code>npm run build</code>.</p>
+  <p>If it fails, fix the commit. Do not skip the gate for production.</p>
+
+  <h3>Step 2 — Provision infrastructure</h3>
+  <ol>
+    <li>Create the HTTPS host and point DNS at it.</li>
+    <li>Create a <strong>dedicated</strong> production Postgres database and enable backups.</li>
+    <li>Create a staging host + staging database if you will test there first (recommended). Never point staging at production <code>DATABASE_URL</code>.</li>
+    <li>Put secrets in the platform secret store.</li>
+  </ol>
+
+  <h3>Step 3 — Validate env against that host</h3>
+  <pre>NODE_ENV=production ^
+SHOPIFY_API_KEY=... ^
+SHOPIFY_API_SECRET=... ^
+SHOPIFY_APP_URL=https://YOUR_REAL_HOST ^
+SCOPES=read_discounts,write_discounts,read_publications,read_products ^
+DATABASE_URL=postgresql://... ^
+  npm run validate:env
+
+npm run check:deployment-readiness
+npm run scan:secrets
+npm run db:check
+npx prisma migrate status</pre>
+  <p class="small">Replace <code>YOUR_REAL_HOST</code> and credentials. Do not paste secrets into chat, git, or this PDF.</p>
+  <p>Optional money-field preflight (report only, safe):</p>
+  <pre>npm run money:backfill:dry-run
+npm run money:verify</pre>
+  <p>Run the actual backfill (<code>npm run money:backfill</code>) only if dry-run shows work and you have an approved change window.</p>
+
+  <h3>Step 4 — Build the application image (or platform build)</h3>
+  <pre>npm run build:docker</pre>
+  <p>Or use the repo <code>Dockerfile</code> on your platform. <strong>Do not</strong> run Prisma migrate during image build. <strong>Do not</strong> start the worker inside the web <code>CMD</code>. Web command is:</p>
+  <pre>npm run start</pre>
+
+  <h3>Step 5 — Migrate the database (once, before traffic)</h3>
+  <div class="note">Web containers do <strong>not</strong> migrate on boot. This is an explicit release step.</div>
+  <ol>
+    <li>Backup Postgres first.</li>
+    <li>Optionally pause the worker: <code>DISCOUNT_SYNC_WORKER_DISABLED=true</code>.</li>
+    <li>Apply migrations:</li>
+  </ol>
+  <pre>npm run migrate:deploy
+npx prisma migrate status</pre>
+  <p>Or the same commands inside a one-shot container with <code>DATABASE_URL</code> set. Never run <code>prisma migrate reset</code> in production.</p>
+
+  <h3>Step 6 — Start web and confirm health</h3>
+  <ol>
+    <li>Deploy the image / start <code>npm run start</code>.</li>
+    <li>Confirm:</li>
+  </ol>
+  <pre>GET https://YOUR_REAL_HOST/health/live
+→ 200  { "status": "ok" }
+
+GET https://YOUR_REAL_HOST/health/ready
+→ 200  { "status": "ready" }</pre>
+  <p>If ready fails, the database is not reachable or not migrated. Do not continue.</p>
+
+  <h3>Step 7 — Schedule the discount-sync worker</h3>
+  <p>Recommended (cron / scheduled job every 1–2 minutes):</p>
+  <pre>npm run discount-sync:once</pre>
+  <p>Alternate (always-on process):</p>
+  <pre>npm run discount-sync:watch</pre>
+  <p>Then inspect:</p>
+  <pre>npm run discount-sync:inspect</pre>
+  <p>Empty queue is OK. Overlapping run-once jobs are safe (row locks). Platform job timeout should be at least several minutes.</p>
+
+  <h3>Step 8 — Generate and validate production Shopify TOML</h3>
+  <p>This writes a deploy file. It does <strong>not</strong> overwrite local <code>shopify.app.toml</code> / <code>shopify.app.upselltrix.toml</code> (those stay as CLI placeholders).</p>
+  <pre>set SHOPIFY_APP_URL=https://YOUR_REAL_HOST
+set SHOPIFY_TOML_TEMPLATE=shopify.app.upselltrix.toml
+set SHOPIFY_TOML_OUT=shopify.app.production.toml
+npm run generate:production-toml
+
+set SHOPIFY_TOML_PATH=shopify.app.production.toml
+npm run validate:production-toml</pre>
+  <p>On PowerShell:</p>
+  <pre>$env:SHOPIFY_APP_URL="https://YOUR_REAL_HOST"
+$env:SHOPIFY_TOML_TEMPLATE="shopify.app.upselltrix.toml"
+$env:SHOPIFY_TOML_OUT="shopify.app.production.toml"
+npm run generate:production-toml
+$env:SHOPIFY_TOML_PATH="shopify.app.production.toml"
+npm run validate:production-toml</pre>
+  <p>Validation fails if URLs still contain localhost or <code>example.com</code> / <code>*.example.com</code>, or if they disagree with <code>SHOPIFY_APP_URL</code>.</p>
+  <p>Expected production TOML fields (example shape only):</p>
+  <pre>application_url = "https://YOUR_REAL_HOST"
+redirect_urls   = [ "https://YOUR_REAL_HOST/auth/callback" ]
+
+[app_proxy]
+url     = "https://YOUR_REAL_HOST/apps/proxy"
+subpath = "free-gift"
+prefix  = "apps"</pre>
+
+  <h3>Step 9 — Deploy to Shopify (config + extensions)</h3>
+  <p>This is an <strong>operator</strong> action. It calls Shopify CLI. CI does not do this for you.</p>
+  <pre>$env:SHOPIFY_TOML_PATH="shopify.app.production.toml"
+npm run deploy:production</pre>
+  <p>Confirm in the CLI that you are deploying the <strong>UpsellTrix</strong> app (not a leftover template app). This publishes:</p>
+  <ul>
+    <li>App URLs and app proxy</li>
+    <li>Webhook subscriptions including compliance</li>
+    <li>Theme app extension (progress bar embed)</li>
+    <li>Discount Function <code>fgpb-discount</code></li>
+  </ul>
+  <div class="warn">Plain <code>npm run deploy</code> does <strong>not</strong> enforce the production TOML gate. Use <code>deploy:production</code> for production.</div>
+
+  <h3>Step 10 — Install on a controlled test store</h3>
+  <ol>
+    <li>Use a store that is not a real merchant, or a dedicated production-canary store.</li>
+    <li>Install UpsellTrix from the Partner app install link / test store.</li>
+    <li>Approve scopes.</li>
+    <li>Confirm Overview loads inside Shopify Admin (embedded).</li>
+  </ol>
+
+  <h3>Step 11 — Merchant smoke (must pass)</h3>
+  <ol>
+    <li>Theme setup → enable <strong>UpsellTrix</strong> app embed → <strong>Save</strong> (on the theme you will preview; draft ≠ live).</li>
+    <li>Create a Spend X → Free Gift campaign: threshold, gift product published to Online Store, activate.</li>
+    <li>On the storefront (Dawn recommended): Add to cart until the bar fills.</li>
+    <li>Confirm the gift line appears and is free at checkout (cart path, not Buy it now).</li>
+    <li>Remove items so spend drops below threshold; gift should come off.</li>
+    <li>Create and activate a small Tiered Free Gifts campaign; confirm extra gifts as spend climbs.</li>
+    <li>Reload the cart page; gift state should reconcile (no duplicates).</li>
+    <li>Check App Proxy JSON in the browser network tab: <code>/apps/free-gift/widget-state</code> returns JSON, not an HTML error.</li>
+    <li>Restart the web process; session should survive or re-auth cleanly.</li>
+    <li>Uninstall and reinstall once on the test store.</li>
+  </ol>
+
+  <h3>Step 12 — Monitoring</h3>
+  <ul class="check">
+    <li>Alert if <code>/health/ready</code> is not 200.</li>
+    <li>Alert if <code>discount-sync:inspect</code> shows a growing failed queue.</li>
+    <li>Confirm logs never print access tokens, cookies, <code>DATABASE_URL</code>, or emails.</li>
+  </ul>
+
+  <h2 class="page-break">7. After hosting works: App Store submission steps</h2>
+  <p>Only start this after Step 11 passed on a hosted app (not the CLI tunnel).</p>
+  <ol>
+    <li>Deploy the marketing website so <code>/privacy</code> and <code>/support</code> are public HTTPS.</li>
+    <li>In Partner Dashboard → UpsellTrix → App listing, paste copy from <code>docs/app-store/listing-copy.md</code>.</li>
+    <li>Set category, Online Store required, pricing Free.</li>
+    <li>Upload icon (1200×1200) and screenshots (1600×900, unique, real UI).</li>
+    <li>Link demo screencast; paste reviewer instructions with real support email and optional demo store.</li>
+    <li>Declare protected customer data honestly (this app reads products/discounts; it is not a customer-PII product — still complete the form as Shopify asks).</li>
+    <li>Run Partner automated checks. Fix anything red.</li>
+    <li>Submit for review.</li>
+  </ol>
+  <div class="note">Until those listing assets exist, you can still run a <strong>private beta</strong>: install via Partner “test on development store” / custom distribution. That is not a public App Store submit.</div>
+
+  <h2>8. Rollback (if production breaks)</h2>
+  <table>
+    <thead><tr><th>Layer</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>Web</td><td>Redeploy the previous image. Do not <code>prisma migrate reset</code>.</td></tr>
+      <tr><td>Shopify config / extensions</td><td>Redeploy the previous CLI version from Partner/CLI.</td></tr>
+      <tr><td>Database</td><td>Add a <em>forward</em> corrective migration, or approved PITR restore. Never reset.</td></tr>
+      <tr><td>Worker</td><td><code>DISCOUNT_SYNC_WORKER_DISABLED=true</code> then inspect; clear the flag to resume.</td></tr>
+      <tr><td>Storefront</td><td>Merchant turns off the UpsellTrix theme app embed.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>9. Local development (not production)</h2>
+  <p>For laptop testing only:</p>
+  <pre>cd C:\Users\Admin\OneDrive\Desktop\UpsellTrix\shopify-app
+npm run dev -- --config shopify.app.upselltrix.toml --store YOUR-DEV-STORE.myshopify.com</pre>
+  <p>CLI rewrites URLs to a tunnel. That is correct for development. It is incorrect as a production URL.</p>
+
+  <h2>10. Hard rules</h2>
+  <ul>
+    <li>Do not rename cart properties <code>_fgpb_free_gift</code>, <code>_fgpb_campaign_id</code>, <code>_fgpb_tier_id</code>.</li>
+    <li>Do not change Discount Function logic as part of “just deploying.”</li>
+    <li>Do not list Mystery Gift, GoKwik, accelerated checkout gifts, or paid billing as live.</li>
+    <li>Do not use “Promotion Engine” or “Free Gift Progress Bar” as the public product name. Public name is <strong>UpsellTrix</strong>.</li>
+    <li>Do not guess production hostnames in git.</li>
+    <li>Do not run staging fixture scripts against production merchant databases.</li>
+  </ul>
+
+  <h2>11. Suggested next actions (this week)</h2>
+  <ol>
+    <li>Pick a host and a Postgres provider; write down the real HTTPS URL.</li>
+    <li>Clean the git working tree; run <code>npm run check:release</code>.</li>
+    <li>Follow Steps 2–11 on <em>staging</em> first if possible.</li>
+    <li>Only then repeat on production and consider App Store listing.</li>
+  </ol>
+
+  <p class="footer-note">
+    Source of truth in repo: <code>docs/ops/deployment.md</code>, <code>docs/ops/deployment-engineer-handoff.md</code>,
+    <code>docs/ops/environment-contract.md</code>, <code>docs/app-store/pre-submission-checklist.md</code>,
+    <code>docs/release/production-readiness-phase-1.md</code>, <code>docs/app-store/feature-inventory.md</code>.
+    If this PDF and the repo disagree, follow the repo.
+  </p>
+</body>
+</html>

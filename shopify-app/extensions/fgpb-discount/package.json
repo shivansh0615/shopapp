@@ -1,0 +1,38 @@
+{
+  "name": "fgpb-discount",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "shopify": "npm exec -- shopify",
+    "typegen": "npm exec -- shopify app function typegen",
+    "build": "npm exec -- shopify app function build",
+    "preview": "npm exec -- shopify app function run",
+    "test": "node --import tsx --test src/discount-engine.test.ts"
+  },
+  "codegen": {
+    "schema": "schema.graphql",
+    "documents": "src/*.graphql",
+    "generates": {
+      "./generated/api.ts": {
+        "plugins": [
+          "typescript",
+          "typescript-operations"
+        ]
+      }
+    },
+    "config": {
+      "omitOperationSuffix": true
+    }
+  },
+  "dependencies": {
+    "@shopify/shopify_function": "~2.0.0"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.0",
+    "tsx": "^4.20.5"
+  }
+}

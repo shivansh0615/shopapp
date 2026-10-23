@@ -1,0 +1,11 @@
+{% comment %}
+  Build a cache-busted asset URL. Shopify asset_url usually includes ?v=;
+  if it does not, use ? instead of &.
+{% endcomment %}
+{% assign fgpb_asset_src = fgpb_asset_name | asset_url %}
+{% if fgpb_asset_src contains '?' %}
+  {% assign fgpb_asset_src = fgpb_asset_src | append: '&fgpb=' | append: fgpb_sync %}
+{% else %}
+  {% assign fgpb_asset_src = fgpb_asset_src | append: '?fgpb=' | append: fgpb_sync %}
+{% endif %}
+<script src="{{ fgpb_asset_src }}" defer></script>

@@ -1,0 +1,34 @@
+{
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/tagged",
+        "quantity": 1,
+        "freeGift": { "value": "true" },
+        "campaignId": { "value": "8" },
+        "merchandise": {
+          "__typename": "ProductVariant",
+          "id": "gid://shopify/ProductVariant/54277124161902"
+        }
+      }
+    ]
+  },
+  "discount": {
+    "discountClasses": ["PRODUCT"],
+    "metafield": {
+      "jsonValue": {
+        "schemaVersion": 1,
+        "shopDomain": "example.myshopify.com",
+        "activeCampaigns": [
+          {
+            "campaignId": "8",
+            "rewardType": "FREE_GIFT",
+            "threshold": { "amount": "999.00", "currencyCode": "INR" },
+            "giftVariantIds": ["54277124161902"],
+            "maxGiftQuantity": 1
+          }
+        ]
+      }
+    }
+  }
+}

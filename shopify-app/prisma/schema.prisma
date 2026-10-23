@@ -1,0 +1,231 @@
+// Prisma schema — PostgreSQL production baseline (Phase 1).
+// Existing local prisma/dev.sqlite is NOT deleted and is NOT used by this schema.
+// `prisma migrate deploy` does not copy SQLite data into Postgres.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?
+  emailVerified       Boolean?
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+
+  // Justified: uninstall / shop/redact / session cleanup always filter by shop.
+  @@index([shop])
+}
+
+model Campaign {
+  id                       Int       @id @default(autoincrement())
+  shop                     String
+  name                     String
+  campaignType             String
+  /**
+   * Legacy major-unit Float — retained for rolling deploy / rollback (Stage E removes later).
+   */
+  threshold                Float
+  /**
+   * Exact threshold in currency minor units (shop currency).
+   */
+  thresholdMinor           BigInt?
+  giftProductId            String
+  giftProductTitle         String?
+  giftProductImage         String?
+  giftVariantId            String?
+  giftQuantity             Int
+  /**
+   * 1–100 for Spend X → Percentage Discount; null otherwise.
+   * Not a money field — remains Float intentionally.
+   */
+  discountPercentage       Float?
+  /**
+   * Legacy fixed discount major units — retained temporarily.
+   */
+  fixedDiscountAmount      Float?
+  /**
+   * Exact fixed discount in currency minor units; null when not a fixed campaign.
+   */
+  fixedDiscountAmountMinor BigInt?
+  /**
+   * ISO 4217 shop currency this campaign’s money fields are denominated in.
+   * App does not support multi-currency campaigns; defaults to INR historically.
+   */
+  currencyCode             String    @default("INR")
+  placements               Json
+  widgetSettings           Json?
+  status                   String
+  ruleType                 String    @default("SPEND_THRESHOLD")
+  triggerQuantity          Int       @default(1)
+  triggerProductIds        Json      @default("[]")
+  triggerCollectionIds     Json      @default("[]")
+  startDate                DateTime?
+  endDate                  DateTime?
+  priority                 Int       @default(0)
+  allowCustomerChoice      Boolean   @default(false)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  giftOptions GiftOption[]
+  rewardTiers CampaignRewardTier[]
+
+  @@index([shop, createdAt])
+  @@index([shop, status, priority])
+}
+
+model GiftOption {
+  id           Int      @id @default(autoincrement())
+  campaignId   Int
+  productId    String
+  productTitle String?
+  productImage String?
+  variantId    String?
+  sortOrder    Int      @default(0)
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}
+
+/**
+ * Ordered spend tiers for "Tiered Free Gifts" campaigns.
+ * Legacy threshold Float retained; thresholdMinor is exact shop-currency minor units.
+ */
+model CampaignRewardTier {
+  id               String   @id @default(cuid())
+  campaignId       Int
+  threshold        Float
+  thresholdMinor   BigInt?
+  giftProductId    String?
+  giftProductTitle String?
+  giftProductImage String?
+  giftVariantId    String
+  position         Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, position])
+  @@index([campaignId])
+}
+
+model AnalyticsEvent {
+  id         Int      @id @default(autoincrement())
+  shop       String
+  campaignId Int?
+  eventType  String
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([shop, createdAt])
+  @@index([shop, eventType])
+}
+
+model ShopDiscount {
+  id                Int       @id @default(autoincrement())
+  shop              String    @unique
+  discountGid       String
+  /**
+   * Eventual-consistency state for Shopify discount sync:
+   * pending | syncing | active | inactive | retry_scheduled | failed
+   */
+  syncStatus        String    @default("inactive")
+  lastSyncErrorCode String?
+  lastSyncedAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+/**
+ * Durable Shopify discount sync retries (Postgres-backed, no external queue).
+ * Survives process restarts. Tenant-scoped. Deduped per shop+action.
+ */
+model DiscountSyncJob {
+  id                   String    @id @default(cuid())
+  shop                 String
+  campaignId           Int?
+  /**
+   * SYNC (metafield+activation) or DEACTIVATE
+   */
+  desiredAction        String
+  /**
+   * active | inactive — meaningful for SYNC
+   */
+  desiredMode          String?
+  /**
+   * pending | claimed | completed | failed | cancelled
+   * cancelled = superseded / uninstall neutralized (terminal, not reclaimed)
+   */
+  status               String    @default("pending")
+  attemptCount         Int       @default(0)
+  maxAttempts          Int       @default(8)
+  nextAttemptAt        DateTime  @default(now())
+  /**
+   * Lock owner token for the claiming worker (not a Shopify token).
+   */
+  claimedAt            DateTime?
+  claimToken           String?
+  leaseExpiresAt       DateTime?
+  lastErrorCode        String?
+  lastErrorMessageSafe String?
+  /**
+   * Deterministic dedupe: `{ACTION}:{shop}` (unique).
+   */
+  dedupeKey            String    @unique
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  completedAt          DateTime?
+
+  @@index([status, nextAttemptAt])
+  @@index([shop, status])
+  @@index([status, leaseExpiresAt])
+}
+
+model AppSettings {
+  id                    Int      @id @default(autoincrement())
+  shop                  String   @unique
+  /**
+   * Legacy default threshold Float — retained temporarily.
+   */
+  defaultThreshold      Float    @default(999)
+  defaultThresholdMinor BigInt?
+  /**
+   * Shop currency for defaultThresholdMinor (campaign money is shop-currency only).
+   */
+  currencyCode          String   @default("INR")
+  defaultWidgetTemplate String   @default("Premium")
+  primaryColor          String   @default("#4b7d63")
+  backgroundColor       String   @default("#f8fafc")
+  textColor             String   @default("#111827")
+  autoAddGift           Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+/**
+ * Storefront integration heartbeat (widget-state app proxy).
+ * Used for merchant onboarding status only — not definitive embed detection.
+ */
+model ShopIntegrationStatus {
+  shop              String    @id
+  lastWidgetStateAt DateTime?
+  updatedAt         DateTime  @updatedAt
+}

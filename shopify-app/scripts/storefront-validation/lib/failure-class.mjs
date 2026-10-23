@@ -1,0 +1,48 @@
+/**
+ * Failure classification codes for storefront integration validation.
+ */
+
+export const FAILURE_CLASS = {
+  REAL_RUNTIME_REGRESSION: "REAL_RUNTIME_REGRESSION",
+  HARNESS_PARSE_FAILURE: "HARNESS_PARSE_FAILURE",
+  HARNESS_STATE_LEAK: "HARNESS_STATE_LEAK",
+  WRONG_THEME_OR_EXTENSION: "WRONG_THEME_OR_EXTENSION",
+  MULTIPLE_CAMPAIGN_INTERFERENCE: "MULTIPLE_CAMPAIGN_INTERFERENCE",
+  AUTH_OR_COOKIE_FAILURE: "AUTH_OR_COOKIE_FAILURE",
+  SHOPIFY_RATE_LIMIT: "SHOPIFY_RATE_LIMIT",
+  SHOPIFY_HTML_OR_REDIRECT_RESPONSE: "SHOPIFY_HTML_OR_REDIRECT_RESPONSE",
+  STALE_CART_SNAPSHOT: "STALE_CART_SNAPSHOT",
+  TEST_DATA_MISMATCH: "TEST_DATA_MISMATCH",
+  ENVIRONMENT_UNSTABLE: "ENVIRONMENT_UNSTABLE",
+  NOT_REPRODUCED: "NOT_REPRODUCED",
+  UNKNOWN: "UNKNOWN",
+  /**
+   * API-only harness expected browser Reward Sync enforcement without
+   * executing storefront JS. Not a production runtime regression.
+   */
+  HARNESS_METHODOLOGY_DEFECT: "HARNESS_METHODOLOGY_DEFECT",
+};
+
+export function classifyFromMeta(meta) {
+  if (!meta) return FAILURE_CLASS.UNKNOWN;
+  const kind = meta.kind;
+  if (kind === "HTML_PASSWORD" || kind === "HTML_LOGIN") {
+    return FAILURE_CLASS.AUTH_OR_COOKIE_FAILURE;
+  }
+  if (kind === "HTML_RATE_LIMIT" || meta.status === 429) {
+    return FAILURE_CLASS.SHOPIFY_RATE_LIMIT;
+  }
+  if (
+    kind === "HTML_BOT_CHALLENGE" ||
+    kind === "HTML_OTHER" ||
+    kind === "HTML_ERROR" ||
+    meta.redirect
+  ) {
+    return FAILURE_CLASS.SHOPIFY_HTML_OR_REDIRECT_RESPONSE;
+  }
+  if (kind === "MALFORMED_JSON" || kind === "EMPTY") {
+    return FAILURE_CLASS.HARNESS_PARSE_FAILURE;
+  }
+  if (kind === "NETWORK_ERROR") return FAILURE_CLASS.ENVIRONMENT_UNSTABLE;
+  return FAILURE_CLASS.UNKNOWN;
+}
