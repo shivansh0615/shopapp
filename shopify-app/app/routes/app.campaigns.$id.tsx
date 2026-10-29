@@ -13,6 +13,7 @@ import { MerchantNoticeBanner } from "../components/ui/MerchantNoticeBanner";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import {
   parseWidgetSettingsFromForm,
+  STOREFRONT_PLACEMENTS,
   widgetFromCampaign,
   LIVE_FIXED_DISCOUNT_TYPE,
   LIVE_PERCENTAGE_DISCOUNT_TYPE,
@@ -37,7 +38,6 @@ import {
   moneyToMajorNumber,
 } from "../lib/money";
 import {
-  annotateRecommendationAvailability,
   getShopCurrencyCode,
   getVariant,
   validateGiftVariantForOnlineStore,
@@ -104,19 +104,6 @@ async function toBuilderInitial(
   const placements = Array.isArray(campaign.placements)
     ? campaign.placements.map(String)
     : ["Product Page", "Cart Drawer"];
-
-  const recsProducts = await annotateRecommendationAvailability(
-    admin,
-    (widget.cartRecommendations?.products || []).map((p) => ({
-      productId: p.productId,
-      variantId: p.variantId,
-      title: p.title || "Product",
-      imageUrl: p.imageUrl ?? null,
-      variantTitle: "Variant",
-      price: p.price ?? null,
-      compareAtPrice: p.compareAtPrice ?? null,
-    })),
-  );
 
   const gift = campaignToSelectedGift(campaign);
   const initialGift = campaignToInitialSelectedProduct(campaign);
@@ -198,13 +185,6 @@ async function toBuilderInitial(
     celebShowIcon: widget.celebrationPopup?.showIcon !== false,
     celebShowConfetti: widget.celebrationPopup?.showConfetti !== false,
     celebAutoCloseMs: widget.celebrationPopup?.autoCloseMs ?? 6500,
-    recsEnabled: Boolean(widget.cartRecommendations?.enabled),
-    recsHeading: widget.cartRecommendations?.heading || "Our other bestsellers loved by shoppers. You can try them!",
-    recsDescription: widget.cartRecommendations?.description || "",
-    recsProducts,
-    recsMaxProducts: widget.cartRecommendations?.maxProducts || 4,
-    recsButtonText: widget.cartRecommendations?.buttonText || "+ Add",
-    recsBackgroundColor: widget.cartRecommendations?.backgroundColor || "#f7d6de",
     status: campaign.status,
   };
 }
@@ -358,7 +338,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       discountPercentage: isPercentage ? discountPercentage : null,
       fixedDiscountAmount: isFixed ? fixedDiscountAmount : null,
       ...(isTiered ? { rewardTiers } : {}),
-      placements: formData.getAll("placements").map(String),
+      placements: [...STOREFRONT_PLACEMENTS],
       widgetSettings: parseWidgetSettingsFromForm(formData, existing.widgetSettings),
       status,
     });
@@ -395,7 +375,7 @@ export default function EditCampaignPage() {
 
         <PageHeader
           title={campaign.name || "Untitled campaign"}
-          subtitle="Update trigger, reward, display, and placement."
+          subtitle="Name the offer, set the reward, then check the preview."
           status={<StatusBadge status={campaign.status} />}
           actions={
             <div className="fgpb-editor-actions">

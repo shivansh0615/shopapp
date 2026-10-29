@@ -7,6 +7,7 @@
 
 import type { AppSettings, Campaign, GiftOption } from "@prisma/client";
 import { proxyDisabledPayload } from "../../lib/proxy-route.server";
+import { STOREFRONT_PLACEMENTS } from "../../lib/campaign-ui";
 import {
   buildDescription,
   buildHeading,
@@ -281,7 +282,7 @@ export function toWidgetStateResponse(
   const response: StorefrontWidgetStateResponse = {
     enabled: true,
     campaignId: snapshot.id,
-    placements: Array.isArray(context.campaign.placements) ? context.campaign.placements.filter((value): value is string => typeof value === "string") : [],
+    placements: [...STOREFRONT_PLACEMENTS],
     threshold: tiered?.nextTier?.threshold ?? snapshot.threshold,
     heading,
     description,

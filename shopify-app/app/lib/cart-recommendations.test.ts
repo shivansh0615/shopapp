@@ -21,14 +21,12 @@ test("normalizeCartRecommendations clamps and sanitizes", () => {
     ],
   });
 
-  assert.equal(result.enabled, true);
+  assert.equal(result.enabled, false);
   assert.equal(result.maxProducts, 8);
   assert.ok((result.heading || "").length <= 80);
   assert.equal(result.description, "Hello\nWorld");
   assert.ok((result.buttonText || "").length <= 40);
-  assert.equal(result.products?.length, 2);
-  assert.equal(result.products?.[0]?.variantId, "gid://shopify/ProductVariant/11");
-  assert.equal(result.products?.[1]?.imageUrl, null);
+  assert.equal(result.products?.length, 0);
 });
 
 test("normalizeCartRecommendations defaults when disabled/empty", () => {
@@ -83,10 +81,10 @@ test("parseWidgetSettingsFromForm normalizes cartRecommendations from JSON", () 
   );
 
   const parsed = parseWidgetSettingsFromForm(form);
-  assert.equal(parsed.cartRecommendations?.enabled, true);
+  assert.equal(parsed.cartRecommendations?.enabled, false);
   assert.equal(parsed.cartRecommendations?.heading, "Picks");
   assert.equal(parsed.cartRecommendations?.maxProducts, 3);
-  assert.equal(parsed.cartRecommendations?.products?.[0]?.productId, "p1");
+  assert.equal(parsed.cartRecommendations?.products?.length, 0);
   assert.equal(parsed.cartProgressBar?.height, 6);
 });
 

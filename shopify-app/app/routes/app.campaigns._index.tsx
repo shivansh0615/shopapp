@@ -89,7 +89,7 @@ export default function CampaignsIndexPage() {
         <MerchantNoticeBanner />
         {campaigns.filter((campaign) => campaign.status === "ACTIVE").length > 1 ? (
           <p className="fgpb-muted-note" role="status">
-            Only one campaign can be active. Pause the extra active campaigns so a single offer holds the slot.
+            More than one campaign is marked active. Activate any campaign to keep that one running and pause the rest.
           </p>
         ) : null}
 

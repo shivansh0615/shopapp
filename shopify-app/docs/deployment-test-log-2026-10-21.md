@@ -758,3 +758,74 @@ Owner asked to publish. Storefront cache bust is `fgpb=164` in `free-gift-embed.
 `node --test storefront-extension/src/tests/tiered-gift-sync.runtime.test.js` passed: 61 tests, 0 failed. A qualifying add recorded one `track-event` request and did not add an eligibility read.
 
 Released **upselltrix-23**, version id [1177290342401](https://dev.shopify.com/dashboard/215127165/apps/407260594177/versions/1177290342401). `npm run deploy -- --allow-updates --no-input --message "Count each free gift added to a cart"`. This publishes the theme extension and the Discount Function. It does not deploy the Node web app and it does not commit git. The Free gifts page and the simpler create-campaign screen need the ApiCloud web app rebuilt from this code before they appear in the admin.
+
+## Analytics review — 26 October 2026
+
+Local only, on top of commit `dc10224`. Nothing was committed or deployed. Storefront gift behavior was not changed. `fgpb_sync` stays `164`.
+
+What changed:
+
+- The cart-coordinator asset check expected cache-bust `162`. Both liquid files already stamp `164`, and the test now requires that shared value plus the existing runtime-before-other-assets order.
+- A missing order subtotal is no longer counted as `0`. A real `0.00` subtotal still counts as zero. Partial GraphQL errors mark the report incomplete.
+- Gift detection follows line items past the first 50, up to 200 lines on that order and 24 extra line requests for the whole report. An order that still cannot be fully read is left out of both averages.
+- Analytics labels AOV with the currency on those order amounts. A failed or missing currency is an em dash, not USD. Mixed currencies are not averaged.
+- Copy for a 400-order sample no longer says the whole 60-day window was inspected, including when that sample has no gift orders or only gift orders.
+
+Commands and results:
+
+- `node --import tsx --test app/lib/order-aov.test.ts app/services/order-aov.server.test.ts` — 15 passed, 0 failed.
+- `node --test storefront-extension/src/tests/cart-coordinator.test.js` — 68 passed, 0 failed.
+- `npm run check:storefront-assets` — passed. Core 9956 bytes; compatibility 29608 bytes.
+- `npm run typecheck` — passed.
+- `npm run test:discount-function` — 39 passed, 0 failed.
+- `npm run test:storefront` — 439 passed, 0 failed. The previous run's one failure was the stale `162` expectation.
+
+### Still not verified on a store
+
+Horizon cart speed is still open. The 22 October owner report on released upselltrix-22 / `fgpb=163` said Horizon add and remove are very slow. No later entry in this log says that was fixed, and this review did not change cart painting.
+
+Checkout is still not a recorded pass. This log does not have a later entry with the theme, app version, campaign settings, and checkout price together. These checks are still required after the next deploy, on one named theme:
+
+- Add the gift above the campaign threshold.
+- Remove it when the cart falls below the threshold.
+- Leave a paid copy of the same variant paid.
+- Confirm the cart shows the gift on that theme.
+- Confirm checkout pricing for the gift and the paid copy.
+
+This admin analytics change is not live until the Node app is rebuilt. It also needs `read_orders` granted before AOV numbers can load. The gift count remains cart-add events, not completed orders.
+
+### Follow-up 01A — 26 October 2026
+
+A missing `lineItems` connection was still counted as an order with no gift. `readLinePage` now requires the connection, the node array, and a boolean `hasNextPage` before an order can enter the no-gift average. The same rule applies to follow-up pages. An explicit empty connection remains an order without a gift. A gift seen on a returned node still counts without reading later pages.
+
+`node --import tsx --test app/lib/order-aov.test.ts app/services/order-aov.server.test.ts` — 20 passed, 0 failed. `npm run typecheck` passed. Nothing was committed or deployed. Horizon speed and live checkout remain open.
+
+## Publication readiness check — 26 October 2026
+
+No store was opened. No theme, campaign, cart, or checkout was exercised. Nothing was committed or deployed.
+
+The Shopify suspension email and its screenshots are not in the repo. Earlier notes say the suspension runs until 27 October 2026 and cited theme-embed deep link 5.1.2 (“App embed does not exist”) and gift selection 2.1.1. The owner previously reported the embed opening as UpsellTrix and typed gift search staying a search. That was not repeated today. Local `app/lib/theme-embed-deeplink.ts` still uses `{client id}/free-gift-embed`.
+
+Last recorded extension release remains upselltrix-23 / `fgpb=164`. The last cart notes remain the 22 October owner report on upselltrix-22 / `fgpb=163`: Savor and Dawn carts reported fine, Horizon add and remove very slow, with no checkout price, theme id, or campaign settings. A recorded single-gift checkout and a recorded tiered checkout are still missing.
+
+## Deployed admin open — 26 October 2026
+
+Browser session was logged into `algorithmtrix-development.myshopify.com`. Admin path `/apps/upselltrix-1` showed the app name UpsellTrix. The embedded frame host was `upselltrixapp.algorithmtrix.com`. The app area displayed “410 Gone”. Direct `/app?shop=algorithmtrix-development.myshopify.com&embedded=1` used the title “Unhandled Thrown Response!” and the same heading. Theme setup, campaign editing, cart, and checkout were not opened. The storefront is password protected. No campaign was changed and no order was placed.
+
+Public pages loaded: `https://upselltrix.algorithmtrix.com/privacy`, `/terms`, and `/support`. The store alerts feed did not contain an app-suspension notice. Partner Dashboard submission fields were not opened. The current theme name was not read.
+
+Owner correction the same day: UpsellTrix opens in normal Chrome. “410 Gone” appears only in Cursor’s browser and is not a deployed-app failure.
+
+Owner report the same day, after using that Chrome session: everything works. Theme name, campaign mode, cart contents, and checkout price were not included in the report. This is not an agent click-through and no order was placed from here.
+
+## Resubmission result — 26 October 2026
+
+No authentication change, commit, or deploy. The original suspension email is not in the project. No new product defect was confirmed. `read_orders` remains only in the local release config; the public privacy page says that scope is not requested, so the disclosure has to change before that scope is published. Partner Dashboard screencast and a written checkout record with theme, threshold, and price are still absent. The owner’s Chrome report stands for the store they have open.
+
+## Dawn and Savor release — 26 October 2026
+
+Released **upselltrix-24**, version id [1181936386049](https://dev.shopify.com/dashboard/215127165/apps/407260594177/versions/1181936386049). Message: “Name Dawn and Savor as the supported themes.” This publishes the theme extension and the Discount Function. The theme-editor note now says Dawn and Savor.
+
+The release did not include `read_orders` and did not set the app handle to `upselltrix`. The public privacy page still says `read_orders` is not requested. `fgpb_sync` stays `164`. Storefront behavior was not changed.
+
+Public support, terms, and FAQ wording was pushed to GitLab `shopify_apps/upselltrix` commit `4ab153a`. Immediately after that push, https://upselltrix.algorithmtrix.com/support still showed the older Online Store 2.0 sentence, so the website host had not rebuilt yet. The homepage ProductDemo files were left uncommitted.

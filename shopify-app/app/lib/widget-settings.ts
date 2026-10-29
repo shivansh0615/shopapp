@@ -90,7 +90,7 @@ export const CELEBRATION_POPUP_PLACEMENTS: CelebrationPopupPlacement[] = ["cente
 export type CelebrationPopupSettings = {
   enabled?: boolean;
   style?: CelebrationPopupStyle;
-  /** Where the popup appears: page center overlay, or inside the cart drawer. */
+  /** Where the popup appears. Always the center of the page. */
   placement?: CelebrationPopupPlacement;
   /** Partial tier unlock heading (Tiered campaigns). */
   tierHeading?: string;
@@ -170,13 +170,6 @@ function sanitizeText(value: unknown, maxLen: number, fallback = ""): string {
     .trim();
   if (!raw) return fallback;
   return raw.length > maxLen ? raw.slice(0, maxLen) : raw;
-}
-
-function sanitizeMoney(value: unknown): string | null {
-  if (value == null || value === "") return null;
-  const n = Number(String(value).replace(/[^0-9.]/g, ""));
-  if (!Number.isFinite(n) || n < 0) return null;
-  return n.toFixed(2);
 }
 
 function sanitizeMultiline(value: unknown, maxLen: number, fallback = ""): string {
@@ -271,12 +264,8 @@ export function normalizeCelebrationPopup(
     ? styleRaw
     : fb.style || "classic") as CelebrationPopupStyle;
 
-  const placementRaw = String(src.placement || fb.placement || "center").toLowerCase();
-  const placement = (CELEBRATION_POPUP_PLACEMENTS.includes(
-    placementRaw as CelebrationPopupPlacement,
-  )
-    ? placementRaw
-    : fb.placement || "center") as CelebrationPopupPlacement;
+  // The unlock popup is always a page-center overlay. Saved drawer values are ignored.
+  const placement = "center" as CelebrationPopupPlacement;
 
   const showIconRaw = (src as { showIcon?: unknown }).showIcon;
   let showIcon = fb.showIcon !== false;
@@ -344,7 +333,6 @@ const RECS_MAX_MAX = 8;
 const RECS_HEADING_MAX = 80;
 const RECS_DESC_MAX = 500;
 const RECS_BUTTON_MAX = 40;
-const RECS_TITLE_MAX = 120;
 
 export const DEFAULT_CART_RECOMMENDATIONS: CartRecommendationsSettings = {
   enabled: false,
@@ -367,47 +355,17 @@ export function normalizeCartRecommendations(
       ? (value as CartRecommendationsSettings)
       : {};
 
-  const seen = new Set<string>();
-  const products: CartRecommendationProduct[] = [];
-  const rawProducts = Array.isArray(src.products) ? src.products : [];
-  for (const item of rawProducts) {
-    if (!item || typeof item !== "object") continue;
-    const productId = sanitizeText((item as CartRecommendationProduct).productId, 128);
-    const variantId = sanitizeText((item as CartRecommendationProduct).variantId, 128);
-    if (!productId || !variantId) continue;
-    const key = `${productId}::${variantId}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const title = sanitizeText((item as CartRecommendationProduct).title, RECS_TITLE_MAX);
-    const imageUrlRaw = (item as CartRecommendationProduct).imageUrl;
-    const imageUrl =
-      typeof imageUrlRaw === "string" && /^https?:\/\//i.test(imageUrlRaw.trim())
-        ? imageUrlRaw.trim().slice(0, 500)
-        : null;
-    const price = sanitizeMoney((item as CartRecommendationProduct).price);
-    const compareAtPrice = sanitizeMoney((item as CartRecommendationProduct).compareAtPrice);
-    products.push({
-      productId,
-      variantId,
-      ...(title ? { title } : {}),
-      imageUrl,
-      ...(price ? { price } : {}),
-      ...(compareAtPrice ? { compareAtPrice } : {}),
-    });
-    if (products.length >= RECS_MAX_MAX) break;
-  }
-
   const maxProducts = clampInt(src.maxProducts, RECS_MAX_MIN, RECS_MAX_MAX, base.maxProducts ?? 4);
 
   return {
-    enabled: src.enabled === true,
+    enabled: false,
     heading: sanitizeText(src.heading, RECS_HEADING_MAX, base.heading || "Bestsellers"),
     description: sanitizeMultiline(
       src.description,
       RECS_DESC_MAX,
       base.description || "",
     ),
-    products: products.slice(0, maxProducts),
+    products: [],
     maxProducts,
     buttonText: sanitizeText(src.buttonText, RECS_BUTTON_MAX, base.buttonText || "+ Add"),
     backgroundColor: sanitizeHexColor(

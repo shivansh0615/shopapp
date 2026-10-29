@@ -66,7 +66,7 @@ The App may be offered as a private beta or free plan. Features labeled coming s
 Without limiting other disclosures:
 
 - Online Store and theme app embed are required for storefront promotions  
-- Theme compatibility is not universal; Dawn / OS2 cart paths are the primary validated targets  
+- Theme compatibility is not universal; Dawn and Savor are the validated themes  
 - Accelerated Checkout / Buy it now paths are not supported for automatic gift insertion  
 - Discount synchronization may occasionally lag after campaign changes  
 

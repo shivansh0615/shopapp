@@ -122,8 +122,7 @@ export default function SupportPage() {
             Compatibility
           </h2>
           <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[var(--muted-foreground)] md:text-base">
-            The primary supported launch experience is Shopify Online Store,
-            with Dawn and other Online Store 2.0 themes where the theme app
+            The supported themes are Dawn and Savor, where the theme app
             embed can be enabled. Support for custom checkouts, accelerated
             checkout gift injection, and third-party checkout wrappers is not
             part of the current launch promise.

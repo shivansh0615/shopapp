@@ -440,9 +440,12 @@ export function createGiftSafetyReconciler({
   getConfig,
   note = () => {},
   // Extra authoritative re-reads allowed purely to let Shopify's allocation
-  // appear. Faults that are already provable (campaign, variant, eligibility,
-  // quantity) never consume this — they are corrected on the first read.
-  discountGraceReads = 1,
+  // appear. A newly activated campaign often needs several reads. Faults that
+  // are already provable (campaign, variant, eligibility, quantity) never
+  // consume this — they are corrected on the first read.
+  discountGraceReads = 4,
+  // Optional pause between those discount re-reads. Tests pass a no-op.
+  wait = async () => {},
   // How many times we may apply corrections and re-verify.
   maxCorrectionRounds = 2,
 } = {}) {
@@ -488,12 +491,13 @@ export function createGiftSafetyReconciler({
           return { ok: true, reads, graceUsed, rounds, applied, violations: [] };
         }
 
-        // Only the discount postcondition is unproven at this point. Spend one
-        // bounded re-read rather than removing a gift that is about to settle.
+        // Only the discount postcondition is unproven at this point. Wait and
+        // re-read rather than removing a gift that is about to settle.
         if (!audit.actions.length && audit.deferred) {
           if (graceUsed >= discountGraceReads) break;
           graceUsed += 1;
           note("gift-safety-grace", { read: reads, graceUsed });
+          await wait(graceUsed);
           continue;
         }
 

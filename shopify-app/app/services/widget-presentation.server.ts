@@ -39,8 +39,14 @@ export function mergeWidgetSettings(
     widgetPadding: campaignSettings?.widgetPadding ?? DEFAULT_WIDGET_PADDING,
     buttonText: campaignSettings?.buttonText,
     cartProgressBar: campaignSettings?.cartProgressBar,
-    cartRecommendations: campaignSettings?.cartRecommendations,
-    celebrationPopup: campaignSettings?.celebrationPopup,
+    cartRecommendations: {
+      ...(campaignSettings?.cartRecommendations ?? {}),
+      enabled: false,
+      products: [],
+    },
+    celebrationPopup: campaignSettings?.celebrationPopup
+      ? { ...campaignSettings.celebrationPopup, placement: "center" }
+      : campaignSettings?.celebrationPopup,
   };
 }
 

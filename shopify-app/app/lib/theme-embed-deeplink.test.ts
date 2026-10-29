@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   THEME_APP_EMBED_BLOCK_HANDLE,
+  THEME_APP_PRODUCT_BLOCK_HANDLE,
   buildActivateAppId,
+  buildThemeAppBlockDeepLink,
   buildThemeAppEmbedDeepLink,
   normalizeMyshopifyShopDomain,
   readPublishedThemeEmbedStatus,
@@ -18,7 +20,7 @@ describe("theme embed deep link", () => {
     assert.equal(id.includes("bc15044b"), false);
   });
 
-  it("URL-encodes activateAppId so the slash is percent-encoded", () => {
+  it("opens App embeds without turning the embed on", () => {
     const url = buildThemeAppEmbedDeepLink({
       shop: "newish-9013.myshopify.com",
       apiKey: API_KEY,
@@ -29,9 +31,8 @@ describe("theme embed deep link", () => {
     );
     assert.match(url, /context=apps/);
     assert.equal(url.includes("template="), false);
-    const encoded = encodeURIComponent(`${API_KEY}/${THEME_APP_EMBED_BLOCK_HANDLE}`);
-    assert.ok(url.includes(`activateAppId=${encoded}`));
-    assert.equal(url.includes(`${API_KEY}/`), false);
+    assert.equal(url.includes("activateAppId="), false);
+    assert.equal(url.includes(API_KEY), false);
   });
 
   it("accepts shop domains with protocol and strips it", () => {
@@ -56,7 +57,9 @@ describe("theme embed deep link", () => {
       shop: "newish-app-test.myshopify.com",
       apiKey: clientId,
     }));
-    assert.equal(url.searchParams.get("activateAppId"), `${clientId}/free-gift-embed`);
+    assert.equal(url.searchParams.get("context"), "apps");
+    assert.equal(url.searchParams.get("activateAppId"), null);
+    assert.equal(url.href.includes(clientId), false);
     const block = readFileSync(new URL(
       "../../extensions/free-gift-progress-bar/blocks/free-gift-embed.liquid",
       import.meta.url,
@@ -71,9 +74,27 @@ describe("theme embed deep link", () => {
       shop: "development-test.myshopify.com",
       apiKey: developmentClientId,
     }));
-    assert.equal(url.searchParams.get("activateAppId"), `${developmentClientId}/free-gift-embed`);
+    assert.equal(url.searchParams.get("activateAppId"), null);
     assert.equal(url.hostname, "development-test.myshopify.com");
     assert.equal(url.href.includes(API_KEY), false);
+    assert.equal(url.href.includes(developmentClientId), false);
+  });
+
+  it("opens the product template and adds the product block to the main section", () => {
+    const url = new URL(buildThemeAppBlockDeepLink({
+      shop: "newish-app-test.myshopify.com",
+      apiKey: API_KEY,
+    }));
+    assert.equal(url.searchParams.get("template"), "product");
+    assert.equal(url.searchParams.get("target"), "mainSection");
+    assert.equal(url.searchParams.get("addAppBlockId"), `${API_KEY}/${THEME_APP_PRODUCT_BLOCK_HANDLE}`);
+    assert.equal(url.searchParams.has("activateAppId"), false);
+    const block = readFileSync(new URL(
+      "../../extensions/free-gift-progress-bar/blocks/free-gift-progress-bar.liquid",
+      import.meta.url,
+    ), "utf8");
+    const schema = JSON.parse(block.match(/{%\s*schema\s*%}([\s\S]*?){%\s*endschema\s*%}/)?.[1] ?? "{}");
+    assert.equal(schema.target, "section");
   });
 });
 

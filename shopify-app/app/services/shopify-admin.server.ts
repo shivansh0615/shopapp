@@ -34,6 +34,8 @@ export type ShopifyVariant = {
   availableForSale: boolean;
   inventoryQuantity: number | null;
   inventoryPolicy: string | null;
+  sellableOnlineQuantity: number | null;
+  inventoryTracked: boolean | null;
   image: ShopifyImage | null;
 };
 
@@ -74,6 +76,8 @@ type GraphQLVariantNode = {
   availableForSale: boolean;
   inventoryQuantity: number | null;
   inventoryPolicy: string | null;
+  sellableOnlineQuantity?: number | null;
+  inventoryItem?: { tracked?: boolean | null } | null;
   image: GraphQLImageNode;
 };
 
@@ -102,6 +106,8 @@ type SearchVariantNode = {
   availableForSale: boolean;
   inventoryQuantity: number | null;
   inventoryPolicy: string | null;
+  sellableOnlineQuantity?: number | null;
+  inventoryItem?: { tracked?: boolean | null } | null;
 };
 
 type SearchProductsResponse = {
@@ -203,6 +209,10 @@ const PRODUCT_QUERY = `#graphql
           availableForSale
           inventoryQuantity
           inventoryPolicy
+          sellableOnlineQuantity
+          inventoryItem {
+            tracked
+          }
           image {
             url
             altText
@@ -233,6 +243,10 @@ const SEARCH_PRODUCT_FIELDS = `
             availableForSale
             inventoryQuantity
             inventoryPolicy
+            sellableOnlineQuantity
+            inventoryItem {
+              tracked
+            }
           }
           pageInfo {
             hasNextPage
@@ -288,6 +302,10 @@ const VARIANT_WITH_PUBLICATION_QUERY = `#graphql
       availableForSale
       inventoryQuantity
       inventoryPolicy
+      sellableOnlineQuantity
+      inventoryItem {
+        tracked
+      }
       image {
         url
         altText
@@ -315,6 +333,10 @@ const VARIANT_FALLBACK_QUERY = `#graphql
       availableForSale
       inventoryQuantity
       inventoryPolicy
+      sellableOnlineQuantity
+      inventoryItem {
+        tracked
+      }
       image {
         url
         altText
@@ -362,6 +384,8 @@ function mapVariant(variant: GraphQLVariantNode): ShopifyVariant {
     availableForSale: variant.availableForSale,
     inventoryQuantity: variant.inventoryQuantity,
     inventoryPolicy: variant.inventoryPolicy,
+    sellableOnlineQuantity: variant.sellableOnlineQuantity ?? null,
+    inventoryTracked: variant.inventoryItem?.tracked ?? null,
     image: mapImage(variant.image),
   };
 }
@@ -481,14 +505,25 @@ type SearchProductNode = NonNullable<
   NonNullable<SearchProductsResponse["data"]>["products"]
 >["nodes"][number];
 
+function toInventoryFields(variant: SearchVariantNode) {
+  return {
+    availableForSale: variant.availableForSale,
+    inventoryQuantity: variant.inventoryQuantity,
+    inventoryPolicy: variant.inventoryPolicy,
+    sellableOnlineQuantity: variant.sellableOnlineQuantity ?? null,
+    inventoryTracked: variant.inventoryItem?.tracked ?? null,
+  };
+}
+
 function mapSearchVariant(
   product: SearchProductNode,
   variant: SearchVariantNode,
   publicationContext: PublicationContext,
 ) {
+  const inventory = toInventoryFields(variant);
   const selectable = canSelectProductVariant({
     status: product.status,
-    variant,
+    variant: inventory,
     publishedOnPublication: product.publishedOnPublication,
     onlineStoreUrl: product.onlineStoreUrl,
     publishedAt: product.publishedAt,
@@ -503,7 +538,7 @@ function mapSearchVariant(
     selectable,
     unavailableReason: selectable ? null : productUnavailableReason({
       status: product.status,
-      variants: [variant],
+      variants: [inventory],
       publishedOnPublication: product.publishedOnPublication,
       onlineStoreUrl: product.onlineStoreUrl,
       publishedAt: product.publishedAt,
@@ -525,7 +560,7 @@ function mapSearchProductNode(
     ? null
     : productUnavailableReason({
         status: product.status,
-        variants,
+        variants: variants.map(toInventoryFields),
         publishedOnPublication: product.publishedOnPublication,
         onlineStoreUrl: product.onlineStoreUrl,
         publishedAt: product.publishedAt,

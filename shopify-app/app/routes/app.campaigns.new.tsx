@@ -4,11 +4,15 @@ import { Form, Link, useActionData, useLoaderData, useLocation, useNavigation } 
 import { CampaignBuilderForm } from "../components/campaigns/CampaignBuilderForm";
 import { PageHeader } from "../components/layout/PageHeader";
 import {
+  DEFAULT_WIDGET,
   LIVE_FIXED_DISCOUNT_TYPE,
   LIVE_PERCENTAGE_DISCOUNT_TYPE,
   LIVE_PROMOTION_TYPE,
   LIVE_TIERED_FREE_GIFTS_TYPE,
+  normalizeHexColor,
   parseWidgetSettingsFromForm,
+  STOREFRONT_PLACEMENTS,
+  TEMPLATE_OPTIONS,
 } from "../lib/campaign-ui";
 import { redirectWithSyncNotice } from "../lib/merchant-notices";
 import { authenticateAdmin } from "../shopify.server";
@@ -22,8 +26,25 @@ import { containerStyle, pageStyle } from "../styles/tokens";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticateAdmin(request);
   const currencyCode = await getShopCurrencyCode(admin);
-  await getSettings(session.shop, currencyCode);
-  return { currencyCode, competingCampaigns: getCampaignOverlapSummaries(await getCampaigns(session.shop)) };
+  const settings = await getSettings(session.shop, currencyCode);
+  const template = (TEMPLATE_OPTIONS as readonly string[]).includes(settings.defaultWidgetTemplate)
+    ? settings.defaultWidgetTemplate
+    : DEFAULT_WIDGET.template ?? "Premium";
+  const threshold = Number(settings.defaultThreshold);
+  return {
+    currencyCode,
+    competingCampaigns: getCampaignOverlapSummaries(await getCampaigns(session.shop)),
+    initial: {
+      threshold: Number.isFinite(threshold) && threshold > 0 ? threshold : 999,
+      template,
+      barColor: normalizeHexColor(settings.primaryColor, DEFAULT_WIDGET.barColor ?? "#111111"),
+      backgroundColor: normalizeHexColor(
+        settings.backgroundColor,
+        DEFAULT_WIDGET.backgroundColor ?? "#FAFAFA",
+      ),
+      textColor: normalizeHexColor(settings.textColor, DEFAULT_WIDGET.textColor ?? "#111111"),
+    },
+  };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -133,7 +154,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       discountPercentage: isPercentage ? discountPercentage : null,
       fixedDiscountAmount: isFixed ? fixedDiscountAmount : null,
       rewardTiers: isTiered ? rewardTiers : undefined,
-      placements: formData.getAll("placements").map(String),
+      placements: [...STOREFRONT_PLACEMENTS],
       widgetSettings: parseWidgetSettingsFromForm(formData),
       status,
       currencyCode,
@@ -153,7 +174,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function CreateCampaignPage() {
-  const { currencyCode, competingCampaigns } = useLoaderData<typeof loader>();
+  const { currencyCode, competingCampaigns, initial } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const location = useLocation();
   const navigation = useNavigation();
@@ -202,6 +223,7 @@ export default function CreateCampaignPage() {
             isSubmitting={isSubmitting}
             currencyCode={currencyCode}
             competingCampaigns={competingCampaigns}
+            initial={initial}
           />
         </Form>
       </div>

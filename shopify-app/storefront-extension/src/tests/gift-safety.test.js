@@ -755,10 +755,13 @@ describe("bounded confirm-and-correct reconciler", () => {
   });
 
   it("removes rather than ship a gift the cart still charges for", async () => {
+    const charged = cartOf([ELIGIBLE_PAID, gift({ key: "charged", discounted: "none" })]);
     const h = harness([
-      cartOf([ELIGIBLE_PAID, gift({ key: "charged", discounted: "none" })]),
-      cartOf([ELIGIBLE_PAID, gift({ key: "charged", discounted: "none" })]),
-      cartOf([ELIGIBLE_PAID, gift({ key: "charged", discounted: "none" })]),
+      charged,
+      charged,
+      charged,
+      charged,
+      charged,
       cartOf([ELIGIBLE_PAID]),
     ]);
     const res = await h.reconciler.settle();
@@ -776,8 +779,8 @@ describe("bounded confirm-and-correct reconciler", () => {
     const res = await h.reconciler.settle();
     assert.equal(res.ok, false);
     assert.equal(res.gaveUp, true);
-    assert.ok(res.reads <= 5, `read budget is bounded, saw ${res.reads}`);
-    assert.equal(res.graceUsed, 1, "grace is spent once, not repeatedly");
+    assert.equal(res.reads, 8, `read budget is bounded, saw ${res.reads}`);
+    assert.equal(res.graceUsed, 4, "grace is spent for the discount window, then it stops");
     assert.equal(res.rounds, 2, "corrections are bounded");
     assert.ok(h.notes.some((n) => n.type === "gift-safety-failed"));
     assert.ok(res.violations.includes(VIOLATION.NOT_FULLY_DISCOUNTED));

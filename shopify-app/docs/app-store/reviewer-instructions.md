@@ -16,7 +16,7 @@ Operator fills these before submit. Tokens are **SAFE_TEMPLATE_PLACEHOLDER** / *
 ## Prerequisites
 
 1. Shopify store with **Online Store** channel  
-2. Theme: **Dawn** recommended (Online Store 2.0)  
+2. Theme: **Dawn** or **Savor**  
 3. At least two regular products and one gift product with an available variant published to Online Store  
 4. Note shop currency for thresholds  
 
@@ -125,7 +125,7 @@ Campaigns may be retained server-side until Shopify shop redaction (reinstall-sa
 
 ## Known limitations (do not treat as defects)
 
-- Dawn / OS2 cart focus — not universal themes  
+- Dawn and Savor are the supported themes — other themes were not verified  
 - Theme embed required per theme  
 - Accelerated Checkout / Buy it now unsupported for automatic gifts  
 - Free during private beta — no paid plan purchase flow  

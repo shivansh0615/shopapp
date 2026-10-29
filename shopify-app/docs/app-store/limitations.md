@@ -16,7 +16,7 @@ Supported: Add to cart → cart / cart drawer → checkout.
 
 ## Theme compatibility
 
-UpsellTrix is optimized for Dawn and Online Store 2.0 cart experiences. Other themes may work, but we do not claim universal theme compatibility. Use Theme setup and Store health check after enabling the embed.
+UpsellTrix is verified on Dawn and Savor. Other themes may not be supported. Use Theme setup and Store health check after enabling the embed.
 
 ---
 

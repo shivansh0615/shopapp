@@ -7,18 +7,18 @@ import {
 } from "../services/promotion-engine/campaign-types";
 
 describe("campaignCapacityError", () => {
-  it("refuses a second campaign while any campaign is active", () => {
-    assert.match(
-      campaignCapacityError([{ id: 24, campaignType: CLASSIC }], TIERED) ?? "",
-      /Only one campaign can be active/,
+  it("allows activating a gift campaign even when another is already active", () => {
+    assert.equal(
+      campaignCapacityError([{ id: 24, campaignType: CLASSIC }], TIERED),
+      null,
     );
-    assert.match(
-      campaignCapacityError([{ id: 25, campaignType: TIERED }], CLASSIC) ?? "",
-      /Only one campaign can be active/,
+    assert.equal(
+      campaignCapacityError([{ id: 25, campaignType: TIERED }], CLASSIC),
+      null,
     );
-    assert.match(
-      campaignCapacityError([{ id: 24, campaignType: CLASSIC }], CLASSIC) ?? "",
-      /Only one campaign can be active/,
+    assert.equal(
+      campaignCapacityError([{ id: 24, campaignType: CLASSIC }], CLASSIC),
+      null,
     );
   });
 

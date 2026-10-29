@@ -167,8 +167,8 @@ export default function TermsPage() {
         </p>
         <p>
           The current launch is designed for Shopify Online Store, with a
-          primary supported experience on Dawn and other Online Store 2.0
-          themes where the theme app embed can be enabled. We do not guarantee
+          primary supported experience on Dawn and Savor, where the theme app
+          embed can be enabled. We do not guarantee
           that every promotion will run under every checkout, third-party
           cart, custom theme, or accelerated checkout environment.
         </p>

@@ -16,6 +16,8 @@ export type UpdateSettingsInput = Partial<{
   currencyCode: string;
 }>;
 
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
 function validateSettingsUpdate(data: UpdateSettingsInput) {
   if (data.defaultThreshold !== undefined) {
     try {
@@ -29,6 +31,15 @@ function validateSettingsUpdate(data: UpdateSettingsInput) {
   }
   if (data.defaultWidgetTemplate !== undefined && !data.defaultWidgetTemplate.trim()) {
     throw new Error("Default widget template is required.");
+  }
+  for (const [label, value] of [
+    ["Primary color", data.primaryColor],
+    ["Background color", data.backgroundColor],
+    ["Text color", data.textColor],
+  ] as const) {
+    if (value !== undefined && !HEX_COLOR.test(String(value).trim())) {
+      throw new Error(`${label} must be a hex color like #4b7d63.`);
+    }
   }
 }
 

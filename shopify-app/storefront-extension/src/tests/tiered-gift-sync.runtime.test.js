@@ -364,6 +364,7 @@ function createHarness({
   window.window = window;
   window.self = window;
   window.top = window;
+  window.__fgpbDiscountGraceWaitMs = 0;
 
   class CustomEvent {
     constructor(type, init) {
@@ -750,6 +751,32 @@ describe("shipped tiered-gift-sync: the gift safety postcondition", () => {
     });
     assert.equal(graceCount(h), 1, "grace is used once and only once");
     assert.equal(tagged(h).length, 1, "the gift survives once Shopify proves it is free");
+    assert.deepEqual(removePosts(h), []);
+  });
+
+  it("keeps a gift when the new campaign discount arrives after several cart reads", async () => {
+    let unprovenReads = 0;
+    const h = await addGift({
+      giftShape: shape("none"),
+      onCartRead: (_n, c) => {
+        const unproven = c.items.some(
+          (i) => i.properties._fgpb_free_gift === "true" && i.final_line_price > 0,
+        );
+        if (!unproven) return null;
+        unprovenReads += 1;
+        if (unprovenReads < 4) return null;
+        return cart(
+          c.items.map((i) =>
+            i.properties._fgpb_free_gift === "true"
+              ? giftLine({ key: i.key, variantId: i.variant_id, coverage: "ours" })
+              : i,
+          ),
+          c.token,
+        );
+      },
+    });
+    assert.equal(tagged(h).length, 1, "the earned gift stays once the discount is proven");
+    assert.equal(graceCount(h), 3, "the extra reads are spent waiting, not removing");
     assert.deepEqual(removePosts(h), []);
   });
 

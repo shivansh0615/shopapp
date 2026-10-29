@@ -444,7 +444,7 @@
       showConfetti: c.showConfetti !== false && style !== "minimal",
       autoCloseMs: Math.max(2000, Math.min(15000, Number(c.autoCloseMs) || 6500)),
       drawerSizePercent: Math.max(30, Math.min(100, Math.round(Number(c.drawerSizePercent) || 52))),
-      placement: String(c.placement || "center").toLowerCase() === "drawer" ? "drawer" : "center",
+      placement: "center",
     };
   }
 

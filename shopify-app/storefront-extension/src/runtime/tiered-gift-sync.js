@@ -1824,9 +1824,29 @@
    * having to clear browser storage — one bounded cycle per load is not a loop.
    */
   var giftSafetyLatches = {};
-  var DISCOUNT_GRACE_READS = 1;
+  // A new campaign's discount often appears on a later cart read, not the first.
+  // Four waits of half a second cover that without leaving a charged gift in checkout.
+  var DISCOUNT_GRACE_READS = 4;
   var MAX_CORRECTION_ROUNDS = 2;
   var safetySettling = false;
+
+  function discountGraceWaitMs() {
+    try {
+      if (typeof window !== "undefined" && window.__fgpbDiscountGraceWaitMs != null) {
+        var configured = Number(window.__fgpbDiscountGraceWaitMs);
+        if (Number.isFinite(configured) && configured >= 0) return configured;
+      }
+    } catch (_eWait) {}
+    return 500;
+  }
+
+  function waitForDiscountGrace() {
+    var ms = discountGraceWaitMs();
+    if (ms <= 0) return Promise.resolve();
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
 
   function safetyCents(value) {
     var n = Number(value);
@@ -2376,7 +2396,7 @@
           if (graceUsed >= DISCOUNT_GRACE_READS) return null;
           graceUsed += 1;
           noteDiag("gift-safety-grace", { read: reads, graceUsed: graceUsed });
-          return step();
+          return waitForDiscountGrace().then(step);
         }
 
         if (rounds >= MAX_CORRECTION_ROUNDS) return null;

@@ -17,6 +17,13 @@ export function withPublishedThemeEmbedCheck(checks: readonly DiagnosticCheck[],
   return [...checks.filter((check) => check.id !== embed.id), embed];
 }
 
+/** Campaign home stays hidden only when Shopify reports the embed is not turned on. */
+export function homeThemeGate(status: EmbedCheckState): "checking" | "setup" | "ready" {
+  if (status === "checking" || status === "unknown") return "checking";
+  if (status === "available" || status === "unavailable") return "setup";
+  return "ready";
+}
+
 export const EMBED_STATUS_COPY: Record<EmbedCheckState, string> = {
   active: "UpsellTrix is enabled on the published theme.",
   available: "The embed is installed but disabled on the published theme. Enable it in App embeds and save.",

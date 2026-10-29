@@ -32,7 +32,7 @@ Product intent sometimes lists Mystery Gift as “Available Now.”
 |---|---|---|
 | Theme app embed (required) | AVAILABLE | Display name UpsellTrix; block handle `free-gift-embed` |
 | Progress bar — product page | AVAILABLE | Placement + storefront assets |
-| Progress bar — cart drawer | AVAILABLE | Core path; Dawn/OS2 focused |
+| Progress bar — cart drawer | AVAILABLE | Core path; verified on Dawn and Savor |
 | Progress bar — cart page | AVAILABLE | Satellite cart-page script |
 | Announcement placement | BETA | UI option; weaker runtime filtering — soft-market |
 | Automatic gift add / sync | AVAILABLE | Tagged gift lines + sync satellites |

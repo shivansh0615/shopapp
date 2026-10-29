@@ -15,7 +15,7 @@ Target length: **3–6 minutes**.
 ## Test data requirements
 
 - Clean Shopify development store with Online Store  
-- Theme: **Dawn** (or another OS2 theme)  
+- Theme: **Dawn** or **Savor**  
 - 2–3 purchasable products priced so cart can cross thresholds (example: $25 / $40 items)  
 - One free gift product with available Online Store variant (price can be >0; discount zeros it)  
 - For Tiered demo: second gift product optional  

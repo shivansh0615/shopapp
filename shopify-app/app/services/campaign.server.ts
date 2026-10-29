@@ -445,18 +445,15 @@ export async function getActiveCampaigns(shop: string): Promise<CampaignWithTier
 }
 
 /**
- * One campaign can be active per shop. This is an early UI check only; the
- * repository enforces the same rule atomically inside every create/update
- * transaction.
+ * Early type check only. Activating a gift campaign pauses any other ACTIVE
+ * campaign for the shop inside the repository transaction.
  */
 export async function validateActivationCapacity(
-  shop: string,
+  _shop: string,
   campaignType: string,
   excludeId?: number,
 ): Promise<string | null> {
-  return campaignCapacityError(
-    await campaignRepository.findEnabledCampaignsByShop(shop), campaignType, excludeId,
-  );
+  return campaignCapacityError([], campaignType, excludeId);
 }
 
 export async function pauseCampaign(id: number, shop: string): Promise<CampaignWithTiers | null> {

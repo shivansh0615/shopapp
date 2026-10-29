@@ -526,13 +526,17 @@ describe("shipped assets honour the coordination contract", () => {
     const giftAt = EMBED.indexOf("tiered-gift-sync.js");
     assert.ok(runtimeAt > -1, "embed must load fgpb-runtime.js");
     assert.ok(runtimeAt < cppAt && runtimeAt < giftAt);
-    assert.match(EMBED, /fgpb_sync = '162'/);
     const sectionRuntimeAt = SECTION.indexOf("fgpb-runtime.js");
     const sectionCppAt = SECTION.indexOf("cart-page-progress.js");
     const sectionGiftAt = SECTION.indexOf("tiered-gift-sync.js");
     assert.ok(sectionRuntimeAt > -1, "product section block must load fgpb-runtime.js");
     assert.ok(sectionRuntimeAt < sectionCppAt && sectionRuntimeAt < sectionGiftAt);
-    assert.match(SECTION, /fgpb_sync = '162'/);
+    const embedSync = EMBED.match(/fgpb_sync = '(\d+)'/);
+    const sectionSync = SECTION.match(/fgpb_sync = '(\d+)'/);
+    assert.ok(embedSync, "embed must stamp a numeric fgpb_sync cache bust");
+    assert.ok(sectionSync, "section block must stamp a numeric fgpb_sync cache bust");
+    assert.equal(embedSync[1], sectionSync[1], "embed and section must share one cache-bust token");
+    assert.equal(embedSync[1], "166");
   });
 
   it("keeps the progress strip out of drawers that are not Dawn", () => {

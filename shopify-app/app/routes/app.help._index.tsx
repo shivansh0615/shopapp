@@ -20,12 +20,12 @@ export default function HelpIndexPage() {
     {
       to: "/app/widgets",
       title: "Theme setup",
-      body: "Enable UpsellTrix on Dawn, Online Store 2.0, or Savor.",
+      body: "Enable UpsellTrix on Dawn or Savor.",
     },
     {
       to: "/app/campaigns/new",
       title: "Create a campaign",
-      body: "Choose your gift, spending goal, and placement.",
+      body: "Choose your gift and spending goal. The offer shows on the product page and in the cart drawer.",
     },
     {
       to: "/app/compatibility",
@@ -74,7 +74,19 @@ export default function HelpIndexPage() {
             </div>
           </div>
           <p className="fgpb-muted-note" style={{ marginTop: 0 }}>
-            <a className="fgpb-text-link" href="mailto:support@upselltrix.algorithmtrix.com" style={{ overflowWrap: "anywhere" }}>
+            <a
+              className="fgpb-text-link"
+              href="mailto:support@upselltrix.algorithmtrix.com"
+              target="_blank"
+              rel="noreferrer"
+              style={{ overflowWrap: "anywhere" }}
+              onClick={(event) => {
+                // App Bridge treats a plain mailto link as an in-app navigation,
+                // which unloads this page. Open the mail client outside the iframe.
+                event.preventDefault();
+                window.open("mailto:support@upselltrix.algorithmtrix.com", "_blank", "noopener,noreferrer");
+              }}
+            >
               support@upselltrix.algorithmtrix.com
             </a>
           </p>

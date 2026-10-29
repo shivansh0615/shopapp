@@ -154,14 +154,14 @@ export function aggregateOverallState(
     return {
       overall: "READY_WITH_LIMITATIONS",
       explanation:
-        "Core free-gift flows can work for Dawn/OS2 cart paths, with known limitations (theme embed verification, accelerated checkout, and optional third-party drawers).",
+        "Core free-gift flows can work on Dawn and Savor, with known limitations (theme embed verification, accelerated checkout, and optional third-party drawers).",
     };
   }
 
   return {
     overall: "READY",
     explanation:
-      "Diagnostics look healthy for supported Dawn/OS2 cart paths. This does not mean every theme or accelerated checkout is supported.",
+      "Diagnostics look healthy for Dawn and Savor. This does not mean every theme or accelerated checkout is supported.",
   };
 }
 

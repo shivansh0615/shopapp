@@ -10,7 +10,6 @@ export type CelebrationPopupPreviewProps = {
   tierDescription?: string;
   buttonText: string;
   borderRadius: number;
-  drawerSizePercent?: number;
   cardBackgroundColor: string;
   titleColor: string;
   descriptionColor: string;
@@ -253,8 +252,6 @@ export function CelebrationPopupPreview(props: CelebrationPopupPreviewProps) {
     showConfetti: props.showConfetti,
   };
 
-  const drawerScale = Math.max(30, Math.min(100, props.drawerSizePercent ?? 52)) / 100;
-
   return (
     <div style={{ display: "grid", gap: 10 }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -305,11 +302,11 @@ export function CelebrationPopupPreview(props: CelebrationPopupPreviewProps) {
           overflow: "hidden",
           background:
             "linear-gradient(160deg, #e8ecf1 0%, #f7f7f8 45%, #dde3ea 100%)",
-          minHeight: props.style === "toast" ? 160 : 280,
+          minHeight: 280,
           display: "flex",
-          alignItems: props.style === "toast" ? "flex-start" : "center",
+          alignItems: "center",
           justifyContent: "center",
-          padding: props.style === "toast" ? "16px 14px" : "24px 16px",
+          padding: "24px 16px",
         }}
       >
         <div
@@ -319,25 +316,8 @@ export function CelebrationPopupPreview(props: CelebrationPopupPreviewProps) {
             background: "rgba(15,23,42,.38)",
           }}
         />
-        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
-          <p
-            style={{
-              margin: "0 0 8px",
-              fontSize: 11,
-              fontWeight: 600,
-              color: "rgba(255,255,255,.85)",
-            }}
-          >
-            Cart drawer size ({Math.round(drawerScale * 100)}%)
-          </p>
-          <div
-            style={{
-              zoom: drawerScale,
-              width: "100%",
-            }}
-          >
-            <PopupCard {...shared} compact />
-          </div>
+        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: props.style === "toast" ? 440 : 340 }}>
+          <PopupCard {...shared} />
         </div>
       </div>
 
@@ -348,9 +328,9 @@ export function CelebrationPopupPreview(props: CelebrationPopupPreviewProps) {
             inset: 0,
             zIndex: 2147483000,
             display: "flex",
-            alignItems: props.style === "toast" ? "flex-start" : "center",
+            alignItems: "center",
             justifyContent: "center",
-            padding: props.style === "toast" ? "24px 16px" : 16,
+            padding: 16,
           }}
         >
           <button

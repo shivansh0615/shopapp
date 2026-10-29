@@ -10,7 +10,7 @@ Embedded admin page: **Compatibility** → `/app/compatibility`.
 4. Storefront communication (`ShopIntegrationStatus.lastWidgetStateAt`)
 5. Theme app embed guidance (deep link; never falsely “Enabled”)
 6. App Proxy path from config (`/apps/free-gift`)
-7. Storefront compatibility mode (Dawn/OS2 core; optional third-party beta; accelerated-checkout limitation)
+7. Storefront compatibility mode (Dawn and Savor; optional third-party beta; accelerated-checkout limitation)
 8. Storefront asset / Theme Check size warning (from static manifest)
 9. Discount Function readiness (read-only mapping/sync state)
 

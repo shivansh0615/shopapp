@@ -53,6 +53,21 @@ describe("gift browsing and variant validation", () => {
     assert.match(result.products[0].variants?.[1].unavailableReason ?? "", /out of stock/);
     assert.equal(result.products[0].variants?.[1].selectable, false);
   });
+
+  it("keeps a product sold out on the Online Store out of the available list", async () => {
+    const soldOut = {
+      ...variant,
+      availableForSale: true,
+      inventoryQuantity: 4,
+      sellableOnlineQuantity: 0,
+      inventoryItem: { tracked: true },
+    };
+    const fake = admin(() => ({ data: { products: { nodes: [{ ...product, variants: { nodes: [soldOut] } }] } } }));
+    const result = await searchProducts(fake.client, "shop.myshopify.com", "", { browse: true });
+    assert.equal(result.products[0].available, false);
+    assert.equal(result.products[0].variants?.[0].selectable, false);
+    assert.match(result.products[0].unavailableReason ?? "", /out of stock/);
+  });
   it("browses without search text and passes the next product cursor to Shopify", async () => {
     const fake = admin(({ variables }) => ({ data: { products: { nodes: [product], pageInfo: variables.after ? { hasNextPage: false, endCursor: null } : { hasNextPage: true, endCursor: "page-1" } } } }));
     const first = await searchProducts(fake.client, "shop.myshopify.com", "", { browse: true });
@@ -96,6 +111,7 @@ describe("gift browsing and variant validation", () => {
   for (const [name, value] of [
     ["unpublished", { ...variant, product: { ...product, publishedOnPublication: false } }],
     ["out of stock", { ...variant, inventoryQuantity: 0, availableForSale: false, product }],
+    ["sold out on the Online Store", { ...variant, inventoryQuantity: 4, sellableOnlineQuantity: 0, inventoryItem: { tracked: true }, product }],
     ["deleted", null],
   ] as const) {
     it(`blocks activation of a ${name} variant`, async () => {

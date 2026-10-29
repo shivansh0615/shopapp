@@ -193,7 +193,7 @@ export const FAQ_ITEMS = [
   {
     question: "Will it work with my theme?",
     answer:
-      "UpsellTrix is designed for modern Shopify storefronts and Online Store 2.0 themes, with a lightweight customer-facing experience.",
+      "UpsellTrix is verified on Dawn and Savor. Other themes may not be supported.",
   },
   {
     question: "Is there a cost during private beta?",

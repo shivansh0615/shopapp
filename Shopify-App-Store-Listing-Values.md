@@ -181,7 +181,7 @@ Leave blank until the reviewer video is uploaded. Paste its accessible unlisted 
 
 1. Install UpsellTrix on a test store with the Online Store channel and approve the requested permissions. No separate UpsellTrix login is required.
 2. Open UpsellTrix and confirm the Overview page loads.
-3. Open Theme setup. In the theme editor, enable UpsellTrix under App embeds and save the theme. Dawn or another Online Store 2.0 theme is recommended.
+3. Open Theme setup. In the theme editor, enable UpsellTrix under App embeds and save the theme. Test on Dawn or Savor.
 4. Open Campaigns, select Create campaign, and choose Spend X → Free Gift.
 5. Set a reachable threshold. Choose an available gift product and variant that are published to the Online Store. Keep the supported product and cart placements enabled, then activate the campaign.
 6. Open the storefront and use the standard Add to cart flow. Add regular merchandise below the threshold and confirm the progress experience appears.

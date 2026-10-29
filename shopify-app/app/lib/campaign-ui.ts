@@ -126,12 +126,7 @@ export const TEMPLATE_OPTIONS = [
   "Celebration",
 ] as const;
 
-export const PLACEMENT_OPTIONS = [
-  "Product Page",
-  "Cart Drawer",
-  "Cart Page",
-  "Announcement Bar",
-] as const;
+export const STOREFRONT_PLACEMENTS = ["Product Page", "Cart Drawer"] as const;
 
 export const BUILDER_STEPS = [
   { id: "type", label: "Promotion type" },

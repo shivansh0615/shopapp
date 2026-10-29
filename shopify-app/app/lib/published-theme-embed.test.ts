@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { loadPublishedThemeEmbedStatus, withPublishedThemeEmbedCheck, type EmbedCheckState } from "./published-theme-embed";
+import { homeThemeGate, loadPublishedThemeEmbedStatus, withPublishedThemeEmbedCheck, type EmbedCheckState } from "./published-theme-embed";
 import { buildOverviewHealth, summarizeOverviewHealth, withPublishedThemeEmbedStatus, isThemeEmbedReady } from "./overview-metrics";
 import type { DiagnosticCheck } from "./compatibility-diagnostics";
 import { aggregateOverallState } from "./compatibility-diagnostics";
@@ -95,4 +95,26 @@ describe("diagnostics readiness", () => {
       assert.equal(checks.filter((entry) => entry.id === "theme_app_embed").length, 1);
     });
   }
+});
+
+describe("home theme gate", () => {
+  it("hides the campaign home only when the embed is off", () => {
+    assert.equal(homeThemeGate("available"), "setup");
+    assert.equal(homeThemeGate("unavailable"), "setup");
+  });
+
+  it("shows the campaign home when the embed is on", () => {
+    assert.equal(homeThemeGate("active"), "ready");
+  });
+
+  it("does not hide the campaign home when the check cannot be read", () => {
+    for (const status of ["missing", "error"] as const) {
+      assert.equal(homeThemeGate(status), "ready");
+    }
+  });
+
+  it("waits while the published theme is still being checked", () => {
+    assert.equal(homeThemeGate("checking"), "checking");
+    assert.equal(homeThemeGate("unknown"), "checking");
+  });
 });

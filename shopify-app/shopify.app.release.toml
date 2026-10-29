@@ -9,6 +9,7 @@ client_id = "b335d11311bf491819d273532508a56b"
 application_url = "https://upselltrixapp.algorithmtrix.com"
 embedded = true
 name = "UpsellTrix"
+handle = "upselltrix"
 
 [webhooks]
 # Align with Admin runtime (app/shopify.server.ts ApiVersion.July26) and shopify.app.toml.

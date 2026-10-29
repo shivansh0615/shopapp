@@ -153,6 +153,7 @@ export function ProductPicker({
   }, [searchQuery, browseMode, runSearch]);
 
   useEffect(() => {
+    if (!showDropdown) return;
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
@@ -161,7 +162,7 @@ export function ProductPicker({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [showDropdown]);
 
   useEffect(() => () => {
     requestSeq.current += 1;
@@ -417,7 +418,7 @@ export function ProductPicker({
 
       {showDropdown && results.length > 0 && (
         <div id={resultsId} style={dropdownStyle} role="region" aria-label="Gift product results">
-          <p style={resultsHintStyle}>Active products only. Open a product to inspect available and unavailable variants.</p>
+          <p style={resultsHintStyle}>Only published products with stock can be added. Anything else stays under Unavailable.</p>
           {(["available", "unavailable", "unchecked"] as const).map(group => {
             const products = productGroups[group];
             const title = group === "available" ? "Available to add" : group === "unchecked" ? "More variants to check" : "Unavailable";

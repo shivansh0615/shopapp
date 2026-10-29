@@ -71,3 +71,9 @@ scripts/_pw-profile*/
 /.codex-pptx/
 /.codex-finalizer/
 
+# Local editor and assistant scratch. Not part of the app.
+.cursor/
+/tmp/
+/deliverables/
+gpt x cursor.md
+

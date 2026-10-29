@@ -17,16 +17,25 @@ async function lockCampaignCapacity(tx: Prisma.TransactionClient, shop: string) 
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`campaign-capacity:${shop}`}))`;
 }
 
+/**
+ * Keep one ACTIVE gift campaign per shop. When another campaign is turned on,
+ * pause every other ACTIVE campaign under the same capacity lock.
+ */
 async function assertCapacity(
   tx: Prisma.TransactionClient, shop: string, status: string, campaignType: string, excludeId?: number,
 ) {
   if (status !== "ACTIVE") return;
-  const active = await tx.campaign.findMany({
-    where: { shop, status: "ACTIVE" },
-    select: { id: true, campaignType: true },
-  });
-  const error = campaignCapacityError(active, campaignType, excludeId);
+  const error = campaignCapacityError([], campaignType, excludeId);
   if (error) throw new Error(error);
+
+  await tx.campaign.updateMany({
+    where: {
+      shop,
+      status: "ACTIVE",
+      ...(excludeId != null ? { id: { not: excludeId } } : {}),
+    },
+    data: { status: "PAUSED" },
+  });
 }
 
 function nextString(value: string | { set?: string } | undefined, current: string): string {

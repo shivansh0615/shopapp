@@ -8,9 +8,14 @@ export const FALLBACK_PUBLICATION_CONTEXT: PublicationContext = {
   canVerifyPublication: false,
 };
 
-export type VariantInventoryFields = {  availableForSale: boolean;
+export type VariantInventoryFields = {
+  availableForSale: boolean;
   inventoryQuantity: number | null;
   inventoryPolicy: string | null;
+  /** Units the Online Store can sell. Warehouse stock is not enough. */
+  sellableOnlineQuantity?: number | null;
+  /** False when Shopify does not track this variant's inventory. */
+  inventoryTracked?: boolean | null;
 };
 
 export type GiftVariantValidationResult =
@@ -19,10 +24,11 @@ export type GiftVariantValidationResult =
 
 export function isSellableVariant(variant: VariantInventoryFields): boolean {
   if (!variant.availableForSale) return false;
-  if (variant.inventoryPolicy === "DENY" && (variant.inventoryQuantity ?? 0) <= 0) {
-    return false;
-  }
-  return true;
+  // A gift must have units the Online Store can sell. Continue-selling and
+  // untracked inventory do not count as stock.
+  const online = variant.sellableOnlineQuantity;
+  if (typeof online === "number") return online > 0;
+  return (variant.inventoryQuantity ?? 0) > 0;
 }
 
 /** Why a catalog product cannot be selected for gift / bestsellers. */
@@ -101,7 +107,7 @@ export function validateGiftVariantForActivation(input: {
   if (!isSellableVariant(input.variant)) {
     return {
       valid: false,
-      reason: "The selected gift variant is not available for sale or has no purchasable inventory.",
+      reason: "The selected gift must be in stock on the Online Store.",
     };
   }
 

@@ -1,3 +1,4 @@
+import { Link, useLocation } from "react-router";
 import { CampaignCompetitionNotice } from "./CampaignCompetitionNotice";
 import type { CampaignOverlapSummary } from "../../lib/campaign-overlaps";
 import type { CSSProperties, ReactNode } from "react";
@@ -10,11 +11,9 @@ import {
 import { ColorField } from "./ColorField";
 import { WidgetLivePreview } from "./WidgetLivePreview";
 import { CelebrationPopupPreview } from "./CelebrationPopupPreview";
-import { ProductMultiPicker, type RecommendationProduct } from "./ProductMultiPicker";
 import type { CelebrationPopupPlacement, CelebrationPopupStyle, WidgetSettings } from "../../lib/widget-settings";
 import {
   DEFAULT_CELEBRATION_POPUP,
-  CELEBRATION_POPUP_PLACEMENTS,
   CELEBRATION_POPUP_STYLES,
 } from "../../lib/widget-settings";
 import {
@@ -28,7 +27,7 @@ import {
   LIVE_TIERED_FREE_GIFTS_TYPE,
   getMerchantPromotionTypeOptions,
   TEMPLATE_OPTIONS,
-  PLACEMENT_OPTIONS,
+  STOREFRONT_PLACEMENTS,
   BUILDER_STEPS,
   type BuilderStepId,
   normalizeHexColor,
@@ -100,13 +99,6 @@ export type CampaignBuilderInitial = {
   celebShowIcon: boolean;
   celebShowConfetti: boolean;
   celebAutoCloseMs: number;
-  recsEnabled: boolean;
-  recsHeading: string;
-  recsDescription: string;
-  recsProducts: RecommendationProduct[];
-  recsMaxProducts: number;
-  recsButtonText: string;
-  recsBackgroundColor: string;
   status?: string;
 };
 
@@ -116,7 +108,7 @@ export type CampaignBuilderFormProps = {
   formId?: string;
   error?: string | null;
   isSubmitting?: boolean;
-  initial?: CampaignBuilderInitial;
+  initial?: Partial<CampaignBuilderInitial>;
   currencyCode?: string;
 };
 
@@ -175,13 +167,6 @@ const DEFAULT_INITIAL: CampaignBuilderInitial = {
   celebShowIcon: DEFAULT_CELEBRATION_POPUP.showIcon !== false,
   celebShowConfetti: DEFAULT_CELEBRATION_POPUP.showConfetti !== false,
   celebAutoCloseMs: DEFAULT_CELEBRATION_POPUP.autoCloseMs ?? 6500,
-  recsEnabled: false,
-  recsHeading: "Our other bestsellers loved by shoppers. You can try them!",
-  recsDescription: "",
-  recsProducts: [],
-  recsMaxProducts: 4,
-  recsButtonText: "+ Add",
-  recsBackgroundColor: "#f7d6de",
 };
 
 function toSelectedGiftProduct(product: InitialSelectedProduct): SelectedGiftProduct {
@@ -209,23 +194,60 @@ function tierOrdinal(n: number): string {
   return `${value}th`;
 }
 
-function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
+const EDITOR_SECTIONS = [
+  ["campaign-details", "Details"],
+  ["campaign-offer", "Offer"],
+  ["campaign-experience", "Experience"],
+] as const;
+
+type EditorSectionId = (typeof EDITOR_SECTIONS)[number][0];
+
+function EditorSectionNav({
+  active,
+  onChange,
+}: {
+  active: EditorSectionId;
+  onChange: (id: EditorSectionId) => void;
+}) {
+  return (
+    <nav className="fgpb-editor-section-nav" aria-label="Campaign editor sections">
+      {EDITOR_SECTIONS.map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          className={active === id ? "is-active" : undefined}
+          aria-current={active === id ? "true" : undefined}
+          onClick={() => onChange(id)}
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function Section({ title, lead, children, id }: { title: string; lead?: string; children: ReactNode; id?: string }) {
   return (
     <section id={id} className="fgpb-section" style={sectionStyle}>
-      <h2 className="fgpb-section__title" style={sectionTitleStyle}>
-        {title}
-      </h2>
+      <div className="fgpb-section__head">
+        <h2 className="fgpb-section__title" style={sectionTitleStyle}>
+          {title}
+        </h2>
+        {lead ? <p className="fgpb-section__lead">{lead}</p> : null}
+      </div>
       {children}
     </section>
   );
 }
 
 export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial, competingCampaigns = [], currencyCode = DEFAULT_SHOP_CURRENCY }: CampaignBuilderFormProps) {
+  const location = useLocation();
   const money = (amount: number | string) => formatAdminMoney(amount, currencyCode);
   const cur = adminCurrencyPrefix(currencyCode);
-  const source = initial ?? DEFAULT_INITIAL;
+  const source = { ...DEFAULT_INITIAL, ...initial };
 
   const [step, setStep] = useState<BuilderStepId>("type");
+  const [editorSection, setEditorSection] = useState<EditorSectionId>("campaign-details");
   const [name, setName] = useState(source.name);
   const [priority, setPriority] = useState(source.priority ?? 0);
   const [campaignType, setCampaignType] = useState(source.campaignType || LIVE_PROMOTION_TYPE);
@@ -270,7 +292,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
   const [widgetPadding, setWidgetPadding] = useState(source.widgetPadding ?? 16);
   const [buttonText, setButtonText] = useState(source.buttonText);
   const [template, setTemplate] = useState(source.template);
-  const [placements, setPlacements] = useState<string[]>(source.placements);
   const [cartBarHeight, setCartBarHeight] = useState(source.cartBarHeight ?? 6);
   const [cartBarRadius, setCartBarRadius] = useState(source.cartBarRadius ?? 8);
   const [cartBarCompact, setCartBarCompact] = useState(source.cartBarCompact !== false);
@@ -309,9 +330,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
   const [celebStyle, setCelebStyle] = useState<CelebrationPopupStyle>(
     source.celebStyle || "classic",
   );
-  const [celebPlacement, setCelebPlacement] = useState<CelebrationPopupPlacement>(
-    source.celebPlacement || "center",
-  );
   const [celebTierHeading, setCelebTierHeading] = useState(
     source.celebTierHeading || "You've unlocked a free gift!",
   );
@@ -322,9 +340,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
   const [celebDescription, setCelebDescription] = useState(source.celebDescription || "");
   const [celebButtonText, setCelebButtonText] = useState(source.celebButtonText || "Awesome");
   const [celebBorderRadius, setCelebBorderRadius] = useState(source.celebBorderRadius ?? 18);
-  const [celebDrawerSizePercent, setCelebDrawerSizePercent] = useState(
-    source.celebDrawerSizePercent ?? 52,
-  );
+  const celebDrawerSizePercent = source.celebDrawerSizePercent ?? 52;
   const [celebCardBg, setCelebCardBg] = useState(
     normalizeHexColor(source.celebCardBg, "#ffffff"),
   );
@@ -342,15 +358,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
   const [celebShowIcon, setCelebShowIcon] = useState(source.celebShowIcon !== false);
   const [celebShowConfetti, setCelebShowConfetti] = useState(source.celebShowConfetti !== false);
   const [celebAutoCloseMs, setCelebAutoCloseMs] = useState(source.celebAutoCloseMs ?? 6500);
-  const [recsEnabled, setRecsEnabled] = useState(source.recsEnabled);
-  const [recsHeading, setRecsHeading] = useState(source.recsHeading);
-  const [recsDescription, setRecsDescription] = useState(source.recsDescription);
-  const [recsProducts, setRecsProducts] = useState<RecommendationProduct[]>(source.recsProducts || []);
-  const [recsMaxProducts, setRecsMaxProducts] = useState(source.recsMaxProducts || 4);
-  const [recsButtonText, setRecsButtonText] = useState(source.recsButtonText || "Add to cart");
-  const [recsBackgroundColor, setRecsBackgroundColor] = useState(
-    normalizeHexColor(source.recsBackgroundColor, "#f7d6de"),
-  );
   const [simulatedCartAmount, setSimulatedCartAmount] = useState(() =>
     mode === "edit" ? Math.round((source.threshold || 0) * 0.6) : Math.round((source.threshold || 0) * 0.5),
   );
@@ -452,10 +459,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
     });
   }
 
-  function togglePlacement(value: string) {
-    setPlacements((prev) => (prev.includes(value) ? prev.filter((p) => p !== value) : [...prev, value]));
-  }
-
   const stepIndex = BUILDER_STEPS.findIndex((s) => s.id === step);
   const isFirstStep = stepIndex <= 0;
   const isLastStep = stepIndex >= BUILDER_STEPS.length - 1;
@@ -516,7 +519,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
     celebrationPopup: {
       enabled: celebEnabled,
       style: celebStyle,
-      placement: celebPlacement,
+      placement: "center",
       tierHeading: celebTierHeading,
       tierDescription: celebTierDescription,
       heading: celebHeading,
@@ -535,20 +538,8 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
       autoCloseMs: celebAutoCloseMs,
     },
     cartRecommendations: {
-      enabled: recsEnabled,
-      heading: recsHeading,
-      description: recsDescription,
-      maxProducts: recsMaxProducts,
-      buttonText: recsButtonText,
-      backgroundColor: recsBackgroundColor,
-      products: recsProducts.map((p) => ({
-        productId: p.productId,
-        variantId: p.variantId,
-        title: p.title,
-        imageUrl: p.imageUrl,
-        price: p.price ?? null,
-        compareAtPrice: p.compareAtPrice ?? null,
-      })),
+      enabled: false,
+      products: [],
     },
   };
 
@@ -641,6 +632,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
           >
             <span style={typeCardTitleStyle}>{formatTypeLabel(option.title)}</span>
             <span style={typeCardDescStyle}>{option.description}</span>
+            {active ? <span className="fgpb-type-card__mark">Selected</span> : null}
             {disabled ? (
               <span style={comingSoonBadgeStyle}>
                 {option.legacyPreserved ? "Existing type" : "Coming soon"}
@@ -665,9 +657,9 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
         express checkout skip this step. Use Add to cart for gift eligibility.
       </p>
       <p style={infoNoticeLinkStyle}>
-        <a href="/app/help/accelerated-checkout" style={infoNoticeAnchorStyle}>
+        <Link to={{ pathname: "/app/help/accelerated-checkout", search: location.search }} style={infoNoticeAnchorStyle}>
           Learn more
-        </a>
+        </Link>
       </p>
     </div>
   ) : null;
@@ -889,29 +881,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
                 );
               })}
             </div>
-            <p style={{ ...labelStyle, marginTop: 8 }}>Popup location</p>
-            <div style={chipRowStyle}>
-              {CELEBRATION_POPUP_PLACEMENTS.map((option) => {
-                const active = celebPlacement === option;
-                const label = option === "center" ? "Page center" : "Cart drawer";
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setCelebPlacement(option)}
-                    className={cx("fgpb-chip", active && "fgpb-chip--active")}
-                    style={{ ...chipStyle, ...(active ? chipActiveStyle : null) }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            <p style={hintTextStyle}>
-              {celebPlacement === "center"
-                ? "Shows as a centered overlay on the page (even if the cart drawer is open)."
-                : "Shows as a compact toast inside the cart drawer, under the progress bar."}
-            </p>
+            <p style={hintTextStyle}>Shows in the center of the page when a gift unlocks.</p>
             <CelebrationPopupPreview
               style={celebStyle}
               heading={celebHeading || unlockedHeading || "You've unlocked your free gift!"}
@@ -924,7 +894,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
               tierDescription={celebTierDescription}
               buttonText={celebButtonText || "Awesome"}
               borderRadius={celebBorderRadius}
-              drawerSizePercent={celebDrawerSizePercent}
               cardBackgroundColor={celebCardBg}
               titleColor={celebTitleColor}
               descriptionColor={celebDescColor}
@@ -1023,25 +992,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
                 disabled={isSubmitting}
               />
             </div>
-            {celebPlacement === "drawer" ? (
-            <div className="fgpb-field" style={fieldStyle}>
-              <label className="fgpb-label" style={labelStyle} htmlFor="fgpb-celeb-drawer-size">
-                Cart drawer popup size ({celebDrawerSizePercent}%)
-              </label>
-              <input
-                id="fgpb-celeb-drawer-size"
-                type="range"
-                min={30}
-                max={100}
-                step={2}
-                value={celebDrawerSizePercent}
-                onChange={(e) => setCelebDrawerSizePercent(Number(e.target.value) || 52)}
-                disabled={isSubmitting}
-                style={{ width: "100%", accentColor: color.primary }}
-              />
-              <p style={hintTextStyle}>How large the unlock popup appears inside the cart drawer. Lower = more compact.</p>
-            </div>
-            ) : null}
             <div className="fgpb-field" style={fieldStyle}>
               <label className="fgpb-label" style={labelStyle}>
                 Auto-close ({Math.round(celebAutoCloseMs / 1000)}s)
@@ -1112,7 +1062,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
   const displayContent = (
     <>
       <div style={copyGroupStyle}>
-        <p style={copyGroupTitleStyle}>Before threshold</p>
+        <p className="fgpb-copy-kicker fgpb-copy-kicker--before">Before threshold</p>
         <div className="fgpb-field" style={fieldStyle}>
           <label className="fgpb-label" style={labelStyle} htmlFor="fgpb-heading">
             Heading
@@ -1143,7 +1093,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
       </div>
 
       <div style={copyGroupStyle}>
-        <p style={copyGroupTitleStyle}>After threshold</p>
+        <p className="fgpb-copy-kicker fgpb-copy-kicker--after">After threshold</p>
         <div className="fgpb-field" style={fieldStyle}>
           <label className="fgpb-label" style={labelStyle} htmlFor="fgpb-unlocked-heading">
             Heading
@@ -1240,29 +1190,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
         </div>
       </div>
     </>
-  );
-
-  const placementContent = (
-    <div style={placementGridStyle}>
-      {PLACEMENT_OPTIONS.map((option) => {
-        const checked = placements.includes(option);
-        return (
-          <label key={option} style={{ ...placementCardStyle, ...(checked ? placementCardActiveStyle : null) }}>
-            <input
-              type="checkbox"
-              name="placements"
-              value={option}
-              checked={checked}
-              onChange={() => togglePlacement(option)}
-              style={{ accentColor: color.primary }}
-              form={formId}
-              disabled={isSubmitting}
-            />
-            <span>{option}</span>
-          </label>
-        );
-      })}
-    </div>
   );
 
   const cartExperienceContent = (
@@ -1630,104 +1557,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
           </>
         ) : null}
       </div>
-
-      <hr style={{ border: "none", borderTop: "1px solid #e8e8e8", margin: 0 }} />
-
-      <div style={{ display: "grid", gap: 12 }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: color.text }}>Bestsellers</p>
-        <p style={{ margin: 0, fontSize: 13, color: "#666" }}>
-          Shows on the cart page and cart drawer below line items. Enable, add products, then save.
-        </p>
-        <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={recsEnabled}
-            onChange={(e) => setRecsEnabled(e.target.checked)}
-            disabled={isSubmitting}
-            style={{ accentColor: color.primary }}
-          />
-          Enable bestsellers
-        </label>
-        {recsEnabled ? (
-          <>
-            <ColorField
-              compact
-              label="Section background"
-              value={recsBackgroundColor}
-              onChange={setRecsBackgroundColor}
-            />
-            <label className="fgpb-field" style={fieldStyle}>
-              <span className="fgpb-label" style={labelStyle}>
-                Section heading
-              </span>
-              <input
-                className="fgpb-input"
-                style={inputStyle}
-                type="text"
-                value={recsHeading}
-                onChange={(e) => setRecsHeading(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </label>
-            <label className="fgpb-field" style={fieldStyle}>
-              <span className="fgpb-label" style={labelStyle}>
-                Supporting line (optional)
-              </span>
-              <textarea
-                className="fgpb-input"
-                style={{ ...inputStyle, height: 72, padding: "10px 12px", resize: "vertical" }}
-                value={recsDescription}
-                onChange={(e) => setRecsDescription(e.target.value)}
-                disabled={isSubmitting}
-                rows={2}
-              />
-            </label>
-            <label className="fgpb-field" style={fieldStyle}>
-              <span className="fgpb-label" style={labelStyle}>
-                Products shown ({recsMaxProducts})
-              </span>
-              <input
-                type="range"
-                min={2}
-                max={8}
-                value={recsMaxProducts}
-                onChange={(e) => setRecsMaxProducts(Number(e.target.value) || 4)}
-                disabled={isSubmitting}
-                style={{ width: "100%", accentColor: color.primary }}
-              />
-            </label>
-            <label className="fgpb-field" style={fieldStyle}>
-              <span className="fgpb-label" style={labelStyle}>
-                Add button text
-              </span>
-              <input
-                className="fgpb-input"
-                style={inputStyle}
-                type="text"
-                value={recsButtonText}
-                onChange={(e) => setRecsButtonText(e.target.value)}
-                disabled={isSubmitting}
-                placeholder="+ Add"
-              />
-            </label>
-            <div>
-              <p className="fgpb-label" style={labelStyle}>
-                Recommended products
-              </p>
-              <ProductMultiPicker
-                products={recsProducts}
-                maxProducts={recsMaxProducts}
-                onChange={setRecsProducts}
-                disabled={isSubmitting}
-              />
-            </div>
-            <p style={{ margin: 0, fontSize: 12, color: "#999" }}>
-              Re-add products after this update if you want sale prices / “% off” badges stored from
-              search.
-            </p>
-          </>
-        ) : null}
-      </div>
     </div>
   );
 
@@ -1771,7 +1600,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
           </>
         )}
         <ReviewRow label="Template" value={template} />
-        <ReviewRow label="Placements" value={placements.length ? placements.join(", ") : "None selected"} />
       </div>
       <p style={reviewNoteStyle}>
         Choose Save draft to finish later, or Activate when your campaign is ready.
@@ -1850,9 +1678,10 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
   const preview = (
     <aside className="fgpb-builder__preview" style={previewWrapStyle}>
       <div className="fgpb-builder__preview-heading">
-        <p style={previewTitleStyle}>Live preview</p>
-        <span>Storefront card</span>
+        <p style={previewTitleStyle}>Preview</p>
+        <span>What shoppers see</span>
       </div>
+      <div className="fgpb-preview-stage">
       <WidgetLivePreview
         key={`preview-${progressHeight}-${widgetPadding}`}
         heading={previewHeading}
@@ -1883,6 +1712,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
         giftImageUrl={isNonGiftDiscount || isTiered ? null : gift?.imageUrl}
         unlocked={isUnlockedPreview}
       />
+      </div>
       <div className="fgpb-builder__preview-controls">
         <div>
           <p className="fgpb-builder__preview-controls-title">Preview controls</p>
@@ -1936,6 +1766,9 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
       <input type="hidden" name="cartBarRadius" value={cartBarRadius} form={formId} />
       <input type="hidden" name="cartBarCompact" value={cartBarCompact ? "true" : "false"} form={formId} />
       <input type="hidden" name="widgetSettings" value={JSON.stringify(widgetSettingsPayload)} form={formId} />
+      {STOREFRONT_PLACEMENTS.map((placement) => (
+        <input key={placement} type="hidden" name="placements" value={placement} form={formId} />
+      ))}
     </>
   );
 
@@ -1948,18 +1781,70 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
     </div>
   ) : null;
 
+  const formActions = (
+    <div className="fgpb-form-actions">
+      <button
+        type="submit"
+        form={formId}
+        name="intent"
+        value="draft"
+        className="fgpb-btn fgpb-btn--secondary"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Saving…" : mode === "edit" ? "Save as draft" : "Save draft"}
+      </button>
+      {mode === "edit" && source.status === "ACTIVE" ? (
+        <button
+          type="submit"
+          form={formId}
+          name="intent"
+          value="pause"
+          className="fgpb-btn fgpb-btn--secondary"
+          disabled={isSubmitting}
+        >
+          Pause
+        </button>
+      ) : (
+        <button
+          type="submit"
+          form={formId}
+          name="intent"
+          value="activate"
+          className={mode === "edit" ? "fgpb-btn fgpb-btn--secondary" : "fgpb-btn fgpb-btn--primary"}
+          disabled={isSubmitting}
+        >
+          {isSubmitting && mode === "create" ? "Saving…" : "Activate"}
+        </button>
+      )}
+      {mode === "edit" ? (
+        <button
+          type="submit"
+          form={formId}
+          name="intent"
+          value="save"
+          className="fgpb-btn fgpb-btn--primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Saving…" : "Save"}
+        </button>
+      ) : null}
+    </div>
+  );
+
   if (mode === "edit") {
     return (
       <div className="fgpb-builder fgpb-builder--edit" data-mode="edit" style={editLayoutStyle}>
         <div style={editMainStyle}>
           {errorBanner}
-          <nav className="fgpb-editor-section-nav" aria-label="Campaign editor sections">
-            <a href="#campaign-details">Details</a>
-            <a href="#campaign-offer">Offer</a>
-            <a href="#campaign-experience">Experience</a>
-            <a href="#campaign-placement">Placement</a>
-          </nav>
-          <Section id="campaign-details" title="Campaign details">
+          <EditorSectionNav
+            active={editorSection}
+            onChange={(id) => {
+              setEditorSection(id);
+              document.querySelector(".fgpb-editor-section-nav")?.scrollIntoView({ block: "nearest" });
+            }}
+          />
+          <div hidden={editorSection !== "campaign-details"}>
+          <Section id="campaign-details" title="Campaign details" lead="Name the offer and choose the kind of reward.">
             {nameField}
             {priorityField}
             <div style={{ marginTop: 4 }}>
@@ -1967,7 +1852,9 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
               {typeContent}
             </div>
           </Section>
-          <Section id="campaign-offer" title="Offer">
+          </div>
+          <div hidden={editorSection !== "campaign-offer"}>
+          <Section id="campaign-offer" title="Offer" lead="Set the spend goal and the reward shoppers receive.">
             <div className="fgpb-builder__subsection">
               <h3>Trigger</h3>
               {thresholdField}
@@ -1977,7 +1864,9 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
               {rewardContent}
             </div>
           </Section>
-          <Section id="campaign-experience" title="Storefront experience">
+          </div>
+          <div hidden={editorSection !== "campaign-experience"}>
+          <Section id="campaign-experience" title="Storefront experience" lead="Write the progress bar and the message in the cart.">
             <div className="fgpb-builder__subsection">
               <h3>Progress widget</h3>
               {displayContent}
@@ -1986,12 +1875,11 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
               <h3>Cart experience</h3>
               {cartExperienceContent}
             </div>
-          </Section>
-          <Section id="campaign-placement" title="Placement">
-            {placementContent}
             {acceleratedCheckoutNotice}
           </Section>
+          </div>
           {hiddenInputs}
+          {formActions}
         </div>
         {preview}
       </div>
@@ -2015,6 +1903,7 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
             {isTiered ? null : thresholdField}
             {rewardContent}
           </section>
+          {formActions}
         </div>
         <aside className="fgpb-create__stage">
           <div className="fgpb-create__stage-hero">
@@ -2025,9 +1914,6 @@ export function CampaignBuilderForm({ mode, formId, error, isSubmitting, initial
         </aside>
       </div>
       {acceleratedCheckoutNotice}
-      {placements.map((placement) => (
-        <input key={placement} type="hidden" name="placements" value={placement} form={formId} />
-      ))}
       {hiddenInputs}
     </div>
   );
@@ -2111,10 +1997,10 @@ const sectionStyle: CSSProperties = { display: "grid", gap: 14 };
 
 const sectionTitleStyle: CSSProperties = {
   margin: 0,
-  fontSize: 13,
-  fontWeight: 700,
+  fontSize: 18,
+  fontWeight: 650,
   color: color.text,
-  letterSpacing: "0.01em",
+  letterSpacing: "-0.02em",
 };
 
 const fieldStyle: CSSProperties = { display: "grid", gap: 8 };
@@ -2169,19 +2055,21 @@ const typeGridStyle: CSSProperties = {
 const typeCardStyle: CSSProperties = {
   position: "relative",
   display: "grid",
-  gap: 4,
+  gap: 6,
   textAlign: "left",
-  border: "1px solid #e8e8e8",
-  borderRadius: 8,
+  border: "1px solid #e7e3f2",
+  borderRadius: 14,
   background: "#fff",
-  padding: "14px 16px",
+  padding: "16px 16px 18px",
   cursor: "pointer",
   fontFamily: "inherit",
 };
 
 const typeCardActiveStyle: CSSProperties = {
-  border: `1px solid ${color.primary}`,
-  background: color.primarySoft,
+  border: "1px solid #6a5ae0",
+  background: "#f6f3ff",
+  boxShadow: "inset 0 0 0 1px #6a5ae0",
+  paddingRight: 92,
 };
 
 const typeCardDisabledStyle: CSSProperties = {
@@ -2335,31 +2223,6 @@ const chipActiveStyle: CSSProperties = {
   borderColor: color.primary,
 };
 
-const placementGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 10,
-};
-
-const placementCardStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  border: "1px solid #e8e8e8",
-  borderRadius: 10,
-  padding: "10px 12px",
-  background: "#fafafa",
-  color: color.text,
-  fontSize: 13,
-  fontWeight: 500,
-  cursor: "pointer",
-};
-
-const placementCardActiveStyle: CSSProperties = {
-  background: "#fff",
-  borderColor: color.primary,
-};
-
 const reviewGridStyle: CSSProperties = { display: "grid", gap: 8 };
 
 const reviewRowStyle: CSSProperties = {
@@ -2423,20 +2286,14 @@ const stepNavNextStyle: CSSProperties = {
 
 const previewWrapStyle: CSSProperties = {
   minWidth: 0,
-  border: `1px solid ${color.border}`,
-  borderRadius: 8,
-  background: "#fff",
-  padding: 20,
-  boxShadow: "none",
 };
 
 const previewTitleStyle: CSSProperties = {
-  margin: "0 0 12px",
-  fontSize: 12,
-  fontWeight: 700,
-  letterSpacing: "0.03em",
-  textTransform: "uppercase",
-  color: color.textSecondary,
+  margin: 0,
+  fontSize: 15,
+  fontWeight: 650,
+  letterSpacing: "-0.02em",
+  color: color.text,
 };
 
 const infoNoticeStyle: CSSProperties = {

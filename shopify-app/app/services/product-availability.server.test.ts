@@ -85,6 +85,59 @@ describe("product availability", () => {
     );
   });
 
+  it("rejects a variant that is sold out on the Online Store even when other stock exists", () => {
+    const variant = {
+      availableForSale: true,
+      inventoryQuantity: 4,
+      inventoryPolicy: "DENY",
+      sellableOnlineQuantity: 0,
+      inventoryTracked: true,
+    };
+    assert.equal(isSellableVariant(variant), false);
+    assert.equal(
+      productUnavailableReason({
+        status: "ACTIVE",
+        variants: [variant],
+        publishedOnPublication: true,
+        publicationContext: publicationVerified,
+      }),
+      "Can't add — this product is out of stock.",
+    );
+  });
+
+  it("requires Online Store stock, including when selling continues at zero", () => {
+    assert.equal(
+      isSellableVariant({
+        availableForSale: true,
+        inventoryQuantity: 0,
+        inventoryPolicy: "CONTINUE",
+        sellableOnlineQuantity: 0,
+        inventoryTracked: true,
+      }),
+      false,
+    );
+    assert.equal(
+      isSellableVariant({
+        availableForSale: true,
+        inventoryQuantity: 0,
+        inventoryPolicy: "DENY",
+        sellableOnlineQuantity: 0,
+        inventoryTracked: false,
+      }),
+      false,
+    );
+    assert.equal(
+      isSellableVariant({
+        availableForSale: true,
+        inventoryQuantity: 3,
+        inventoryPolicy: "DENY",
+        sellableOnlineQuantity: 3,
+        inventoryTracked: true,
+      }),
+      true,
+    );
+  });
+
   it("explains out-of-stock products clearly for the dashboard picker", () => {
     const reason = productUnavailableReason({
       status: "ACTIVE",

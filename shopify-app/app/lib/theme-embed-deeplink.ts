@@ -1,16 +1,19 @@
 /**
- * Theme app embed deep link.
+ * Theme editor links.
  *
- * Shopify's current format is activateAppId={api_key}/{block_handle}.
+ * The embed link opens App embeds and leaves the switch off. Shopify's
+ * activateAppId parameter turns the embed on, so merchant links do not send it.
  * api_key is the running app's client_id (SHOPIFY_API_KEY), not the client secret
- * and not the extension uid in shopify.extension.toml. The uuid form is deprecated
- * and produces "App embed does not exist".
+ * and not the extension uid in shopify.extension.toml.
  *
  * The block handle is the Liquid filename without .liquid.
  */
 
 /** blocks/free-gift-embed.liquid */
 export const THEME_APP_EMBED_BLOCK_HANDLE = "free-gift-embed";
+
+/** blocks/free-gift-progress-bar.liquid — product template app block, not the body embed. */
+export const THEME_APP_PRODUCT_BLOCK_HANDLE = "free-gift-progress-bar";
 
 export function normalizeMyshopifyShopDomain(shop: string): string {
   const trimmed = String(shop || "")
@@ -48,9 +51,9 @@ export function buildActivateAppId(
 }
 
 /**
- * Theme editor URL that opens App embeds for this embed block.
- * Shop domain comes from the authenticated shop. Client id comes from the
- * app that is actually running, so production and development stay separate.
+ * Theme editor URL that opens App embeds. The merchant turns UpsellTrix on and saves.
+ * Shop domain comes from the authenticated shop. Client id is checked so a
+ * misconfigured app does not build a link, and it is not sent as activateAppId.
  */
 export function buildThemeAppEmbedDeepLink(input: {
   shop: string;
@@ -60,18 +63,36 @@ export function buildThemeAppEmbedDeepLink(input: {
   template?: string;
 }): string {
   const shop = normalizeMyshopifyShopDomain(input.shop);
-  const activateAppId = buildActivateAppId(
-    input.apiKey,
-    input.blockHandle ?? THEME_APP_EMBED_BLOCK_HANDLE,
-  );
+  buildActivateAppId(input.apiKey, input.blockHandle ?? THEME_APP_EMBED_BLOCK_HANDLE);
 
   const params = new URLSearchParams();
   params.set("context", "apps");
   if (input.template) {
     params.set("template", input.template);
   }
-  params.set("activateAppId", activateAppId);
 
+  return `https://${shop}/admin/themes/current/editor?${params.toString()}`;
+}
+
+/**
+ * Theme editor URL that adds the product-page app block to the main section.
+ * Shopify's documented target for the section with id "main" is mainSection.
+ */
+export function buildThemeAppBlockDeepLink(input: {
+  shop: string;
+  apiKey: string;
+  blockHandle?: string;
+  template?: string;
+}): string {
+  const shop = normalizeMyshopifyShopDomain(input.shop);
+  const addAppBlockId = buildActivateAppId(
+    input.apiKey,
+    input.blockHandle ?? THEME_APP_PRODUCT_BLOCK_HANDLE,
+  );
+  const params = new URLSearchParams();
+  params.set("template", input.template?.trim() || "product");
+  params.set("addAppBlockId", addAppBlockId);
+  params.set("target", "mainSection");
   return `https://${shop}/admin/themes/current/editor?${params.toString()}`;
 }
 
